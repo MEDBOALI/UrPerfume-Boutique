@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>UrPerfume - Experience Luxury One Drop at a Time</title>
+      
+      <!-- Premium Fonts -->
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Outfit:wght@300;500;700;800&display=swap" rel="stylesheet">
+      
+      <!-- Icons & Animation -->
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+      <link rel="stylesheet" href="style.css">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  
+      <!-- Firebase SDK -->
+      <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+      <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  
+      <link rel="icon" type="image/webp" href="assets/favicon.webp">
+  </head>
+<body class="dark-mode">
+    <!-- Custom Cursor -->
+    <div id="cursor"></div>div>
+    <div id="cursor-follower"></div>div>
+
+    <!-- Preloader -->
+    <div id="preloader">
+            <div class="loader-content">
+                        <div class="logo-text">URPERFUME</div>div>
+                        <div class="progress-bar">
+                                        <div class="progress-inner"></div>div>
+                        </div>div>
+            </div>div>tions" onclick="setFilter('back')" data-i18n="nav.collections">Collections</a>
+                      <a href="#about" data-i18n="nav.about">Our Story</a>a>
+    </div>
+
+              <div class="nav-actions">
+                                <div class="lang-switcher">
+                                                      <span onclick="setLanguage('en')" class="active">EN</span>span>
+                                                      <span onclick="setLanguage('fr')">FR</span>span>
+                                                      <span onclick="setLanguage('ar')">AR</span>span>
+                                </div>
+                                <div class="theme-toggle" onclick="toggleTheme()">
+                                                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>path>
+                                                      </svg>svg>
+                                </div>
+                                <div class="search-btn" onclick="toggleSearch()">
+                                                      <i class="fas fa-search"></i>i>
+                                </div>
+                                <div class="cart-btn" onclick="openCart()">
+                                                      <i class="fas fa-shopping-bag"></i>i>
+                                                      <span id="cart-count">0</span>span>
+                                </div>
+              </div>
+</body>div>
+</html>nav>
+
+    <!-- Search Overlay -->
+    <div id="search-overlay" class="search-overlay">
+              <button class="close-search" onclick="toggleSearch()"><i class="fas fa-times fa-2x"></i>i></button>button>
+              <div class="search-container">
+                            <input type="text" id="search-input" placeholder="Search fragrances..." onkeyup="handleSearch(this.value)">
+                            <div id="search-results" class="search-results"></div>
+              </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+              <div class="hero-bg-overlay"></div>
+              <div class="hero-content">
+                            <h4 class="hero-subtitle" data-i18n="hero.subtitle">Premium Decant Collection</h4>h4>
+                            <h1 class="hero-title" data-i18n="hero.title">Experience Luxury <span class="highlight">One Drop</span>span> at a Time</h1>h1>
+                            <p class="hero-description" data-i18n="hero.desc">Original fragrances decanted into premium 10ml travel packs. Authenticity guaranteed, starting from 100 DH.</p>p>
+                            <div class="hero-btns">
+                                              <a href="#collections" class="btn primary-btn" onclick="setFilter('back')" data-i18n="hero.shop">Shop Collections</a>a>
+                                              <a href="#collections" class="btn secondary-btn" onclick="setFilter('pack')" data-i18n="hero.packs">Exclusive Packs</a>a>
+                            </div>
+              </div>
+
+              <div class="hero-visual">
+                            <div class="floating-pack" id="pack-1">
+                                              <img src="assets/stronger_with_you.webp" alt="SWY Absolutely">
+                                              <div class="bottle-label">MOST POPULAR</div>
+                            </div>
+                            <div class="floating-pack" id="pack-2">
+                                              <img src="assets/light_blue.webp" alt="D&G Light Blue">
+                            </div>
+                            <div class="floating-pack" id="pack-3">
+                                              <img src="assets/stronger_with_you.webp" alt="SWY Freeze">
+                            </div>
+              </div>
+
+              <div class="scroll-indicator">
+                            <div class="mouse"></div>
+                            <span data-i18n="hero.scroll">Scroll to explore</span>span>
+              </div>
+    </section>section>
+
+    <!-- Marquee Section -->
+    <section class="marquee-section">
+              <h3 class="marquee-title" data-i18n="marquee.title">Trending Now</h3>h3>
+              <div class="marquee">
+                            <div class="marquee-inner" id="marquee-content">
+                                              <!-- JS populated -->
+                            </div>
+              </div>
+    </section>section>
+
+    <!-- Collections View -->
+    <section id="collections-view" class="collections-selection">
+              <div class="section-header">
+                            <h2 class="section-title" data-i18n="nav.collections">Collections</h2>h2>
+                            <p class="section-subtitle">Curated categories for every style</p>p>
+              </div>
+
+              <div class="collection-cards">
+                            <div class="collection-card" onclick="setFilter('niche')">
+                                              <div class="collection-bg niche-bg"></div>
+                                              <div class="collection-content">
+                                                                    <h3 data-i18n="coll.niche.title">Exclusive Niche</h3>h3>
+                                                                    <p data-i18n="coll.niche.desc">Luxury masterpieces from Xerjoff, Creed, LV, and more.</p>p>
+                                                                    <span class="btn-text" data-i18n="coll.niche.btn">Explore Niche</span>span>
+                                              </div>
+                            </div>
+
+                            <div class="collection-card" onclick="setFilter('designer')">
+                                              <div class="collection-bg designer-bg"></div>
+                                              <div class="collection-content">
+                                                                    <h3 data-i18n="coll.designer.title">Designer Collection</h3>h3>
+                                                                    <p data-i18n="coll.designer.desc">Popular classics and modern favorites.</p>p>
+                                                                    <span class="btn-text" data-i18n="coll.designer.btn">Explore Designer</span>span>
+                                              </div>
+                            </div>
+
+                            <div class="collection-card" onclick="setFilter('pack')">
+                                              <div class="collection-bg pack-bg"></div>
+                                              <div class="collection-content">
+                                                                    <h3 data-i18n="coll.pack.title">Luxury Sets</h3>h3>
+                                                                    <p data-i18n="coll.pack.desc">Complete fragrance rituals and gift sets.</p>p>
+                                                                    <span class="btn-text" data-i18n="coll.pack.btn">Explore Packs</span>span>
+                                              </div>
+                            </div>
+
+                            <div class="collection-card" onclick="setFilter('all')">
+                                              <div class="collection-bg all-bg"></div>
+                                              <div class="collection-content">
+                                                                    <h3 data-i18n="coll.all.title">Full Collection</h3>h3>
+                                                                    <p data-i18n="coll.all.desc">Browse our entire catalog of 60+ premium scents.</p>p>
+                                                                    <span class="btn-text" data-i18n="coll.all.btn">See All</span>span>
+                                              </div>
+                            </div>
+              </div>
+    </section>section>
+
+    <!-- Products Section (Hidden by default) -->
+    <section id="products-section" class="products" style="display: none;">
+              <div class="products-header">
+                            <button class="back-btn" onclick="setFilter('back')">
+                                              <i class="fas fa-arrow-left"></i>i> <span data-i18n="products.back">Back to Collections</span>span>
+                            </button>button>
+                            <div class="header-controls" style="display: flex; gap: 20px; align-items: center: center;">
+                                              <h2 class="section-title" id="collection-title">Collection</h2>h2>
+                                              <div class="sort-wrapper">
+                                                                    <select id="product-sort" onchange="handleSortChange(this.value)" class="form-input" style="margin-bottom: 0; padding: 8px 15px; width: 200px;">
+                                                                                              <option value="default">Default Sorting</option>option>
+                                                                                              <option value="sells">Best Sellers</option>option>
+                                                                                              <option value="price-asc">Price: Low to High</option>option>
+                                                                                              <option value="price-desc">Price: High to Low</option>option>
+                                                                                              <option value="name">Name: A-Z</option>option>
+                                                                                              <option value="brand">Brand Name</option>option>
+                                                                    </select>select>
+                                              </div>
+                            </div>
+              </div>
+              <div id="product-grid" class="product-grid">
+                            <!-- JS populated -->
+              </div>
+    </section>section>
+
+    <!-- About Section -->
+    <section id="about" class="about-section">
+              <div class="about-container">
+                            <div class="about-img-wrapper">
+                                              <img src="assets/about_story.webp" alt="Our Story" class="about-img">
+                                              <div class="about-badge">100% Original <br> Guaranteed</div>
+                            </div>
+                            <div class="about-content">
+                                              <h2 class="section-title" data-i18n="about.title">Our Story</h2>h2>
+                                              <p class="about-text" data-i18n="about.story">UrPerfume was founded with a single mission: to make the world's most luxurious scents accessible to everyone. We offer professional decants-precision-poured samples that allow you to experience luxury without the full-bottle price tag.</p>p>
+                                              <p class="about-text" data-i18n="about.originality">Every drop we provide is 100% original, decanted directly from the authentic brand bottles. No compromises, no imitations.</p>p>
+
+                                              <div class="social-links-about">
+                                                                    <a href="https://instagram.com/urperfume" target="_blank" class="social-item">
+                                                                                              <i class="fab fa-instagram fa-2x"></i>i>
+                                                                                              <span>@urperfume</span>
+                                                                    </a>a>
+                                                                  <a href="https://tiktok.com/@urperfume" target="_blank" class="social-item">
+                                                                                          <i class="fab fa-tiktok fa-2x"></i>i>
+                                                                                          <span>UrPerfume Boutique</span>
+                                                                  </a>a>
+                                              </div>
+                            
+                                            <div class="about-cta">
+                                                                <p style="margin-bottom: 15px; opacity: 0.6;" data-i18n="about.contact">Need more information? We're here to help.</p>p>
+                                                                <a href="https://wa.me/212752214437" class="highlight-cta" data-i18n="about.wa">Message us on WhatsApp</a>a>
+                                            </div>
+                            </div>
+              </div>
+    </section>section>
+
+    <!-- Footer -->
+    <footer style="padding: 60px 5%; background: #000; border-top: 1px solid rgba(255,255,255,0.05); text-align: center;">
+            <div class="logo" style="margin-bottom: 30px;">URPERFUME</div>
+            <p style="opacity: 0.4; font-size: 0.8rem;">&copy; 2024 UrPerfume Boutique. All rights reserved. <br> Moroccan Premium Decant Service.</p>p>
+    </footer>footer>
+
+    <!-- Cart Overlay & Drawer -->
+    <div id="cart-overlay" onclick="closeCart()"></div>
+    <div id="cart-drawer">
+            <div class="cart-header">
+                        <h3 data-i18n="cart.title">Your Collection</h3>h3>
+                        <button class="close-cart" onclick="closeCart()"><i class="fas fa-times fa-2x"></i>i></button>button>
+            </div>
+            
+            <div id="cart-items-list" class="cart-items">
+                        <!-- JS populated -->
+            </div>
+    
+            <div id="coupon-section" class="coupon-section">
+                        <input type="text" id="coupon-input" placeholder="Coupon Code">
+                        <button onclick="applyCoupon()" data-i18n="cart.apply">Apply</button>button>
+            </div>
+    
+            <div class="cart-footer">
+                        <div class="cart-total">
+                                        <span data-i18n="cart.total">Total:</span>
+                                        <span id="cart-total-amount">0 DH</span>
+                        </div>
+                        <button class="checkout-btn" id="checkout-btn" onclick="showCheckout()" data-i18n="cart.checkout">Checkout</button>button>
+                        
+                        <div id="checkout-form" style="display: none;">
+                                        <input type="text" id="order-fname" class="form-input" placeholder="First Name">
+                                        <input type="text" id="order-lname" class="form-input" placeholder="Last Name">
+                                        <input type="text" id="order-city" class="form-input" placeholder="City">
+                                        <input type="text" id="order-address" class="form-input" placeholder="Full Address">
+                                        <input type="text" id="order-phone" class="form-input" placeholder="WhatsApp Number">
+                                        <button class="checkout-submit" onclick="submitOrder()" data-i18n="cart.confirm">Confirm Order (WhatsApp)</button>button>
+                        </div>
+                        
+                        <button class="continue-shopping" onclick="closeCart()" data-i18n="cart.continue">Continue Shopping</button>button>
+            </div>
+    </div>
+
+    <!-- Hidden Admin Login (Click Logo 7 Times) -->
+    <div id="admin-login-modal" class="search-overlay" style="z-index: 20000;">
+            <div class="search-container" style="max-width: 400px;">
+                        <h2 style="margin-bottom: 30px;">Admin Access</h2>h2>
+                        <input type="password" id="admin-password" class="form-input" placeholder="Security Key" style="font-size: 1.2rem; text-align: center;">
+                        <p id="login-error" style="color: #ff4d4d; display: none; margin-top: 10px;">Access Denied</p>p>
+                        <div style="margin-top: 30px; display: flex; gap: 10px;">
+                                        <button class="btn primary-btn" onclick="attemptAdminLogin()" style="flex: 1;">Login</button>button>
+                                        <button class="btn secondary-btn" onclick="closeAdminLogin()" style="flex: 1;">Cancel</button>button>
+                        </div>
+            </div>
+    </div>
+
+    <!-- Admin Panel Overlay -->
+    <div id="admin-panel" class="admin-panel-overlay" style="display: none;">
+            <div class="admin-sidebar">
+                        <div class="admin-logo">UR ADMIN</div>
+                        <div class="admin-user-info">
+                                        <div class="admin-avatar">MB</div>
+                                        <div class="admin-name" id="admin-role-name">Med Boali</div>
+                                        <div class="admin-role" id="admin-role-label">Master Admin</div>
+                        </div>
+                        <div class="admin-nav">
+                                        <button class="admin-nav-item active" onclick="showAdminTab('orders')"><i class="fas fa-shopping-cart"></i>i> Orders</button>button>
+                                        <button class="admin-nav-item" onclick="showAdminTab('stats')"><i class="fas fa-chart-line"></i>i> Statistics</button>button>
+                                        <button class="admin-nav-item" id="nav-settings" onclick="showAdminTab('settings')"><i class="fas fa-cog"></i>i> Settings</button>button>
+                                        <button class="admin-nav-item" onclick="logoutAdmin()" style="margin-top: auto; color: #ff4d4d;"><i class="fas fa-sign-out-alt"></i>i> Logout</button>button>
+                        </div>
+            </div>
+            <div class="admin-main">
+                        <div class="admin-header">
+                                        <h1 id="admin-tab-title">Orders Dashboard</h1>h1>
+                                        <button class="refresh-btn" onclick="refreshOrders()"><i class="fas fa-sync-alt"></i>i> Refresh</button>button>
+                        </div>
+                        <div id="admin-content" class="admin-content">
+                                        <!-- Dynamic Content -->
+                        </div>
+            </div>
+    </div>
+
+    <style>
+              /* Admin Panel Internal Styles */
+              .admin-panel-overlay {
+                            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                            background: #050505; z-index: 30000; display: flex; color: #fff;
+                            font-family: 'Inter', sans-serif;
+              }
+              .admin-sidebar {
+                            width: 280px; background: #0a0a0a; border-right: 1px solid rgba(212,175,55,0.1);
+                            display: flex; flex-direction: column; padding: 30px;
+              }
+              .admin-logo { font-family: 'Outfit'; font-weight: 800; color: var(--primary-color); font-size: 1.8rem; margin-bottom: 40px; }
+              .admin-user-info { margin-bottom: 40px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 15px; text-align: center; }
+              .admin-avatar { width: 60px; height: 60px; background: var(--primary-color); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-weight: 800; }
+              .admin-role { font-size: 0.7rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; }
+              .admin-nav { display: flex; flex-direction: column; gap: 10px; }
+              .admin-nav-item { background: transparent; border: none; color: #fff; padding: 15px; text-align: left; border-radius: 10px; cursor: pointer; transition: 0.3s; opacity: 0.6; display: flex; align-items: center; gap: 15px; }
+              .admin-nav-item:hover, .admin-nav-item.active { opacity: 1; background: rgba(212,175,55,0.1); color: var(--primary-color); }
+              .admin-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+              .admin-header { padding: 30px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
+              .admin-content { flex: 1; overflow-y: auto; padding: 40px; }
+              .refresh-btn { background: transparent; border: 1px solid var(--primary-color); color: var(--primary-color); padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+
+              .order-card { background: #111; border: 1px solid rgba(255,255,255,0.05); border-radius: 15px; padding: 25px; margin-bottom: 25px; transition: 0.3s; }
+              .order-card:hover { border-color: var(--primary-color); }
+              .order-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 0.8rem; }
+              .order-status { padding: 4px 12px; border-radius: 20px; text-transform: uppercase; font-weight: 800; font-size: 0.6rem; }
+              .status-pending { background: #d4af37; color: #000; }
+              .status-accepted { background: #25d366; color: #fff; }
+              .status-refused { background: #ff4d4d; color: #fff; }
+              .order-details { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+              .order-item-row { display: flex; justify-content: space-between; font-size: 0.9rem; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+              .order-actions { margin-top: 25px; display: flex; gap: 15px; }
+              .accept-btn { background: #25d366; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; font-weight: 700; cursor: pointer; }
+              .refuse-btn { background: transparent; border: 1px solid #ff4d4d; color: #ff4d4d; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+
+              .highlight-product { animation: highlightGlow 3s ease; }
+              @keyframes highlightGlow {
+                            0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+                            50% { box-shadow: 0 0 30px 10px rgba(212, 175, 55, 0.4); border-color: #d4af37; }
+                            100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+              }
+          </style>
+
+    <script src="firebase-config.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
+
+    </style></span></span>
+    </div>div>
+
+    <!-- Floating WhatsApp -->
+    <a href="https://wa.me/212752214437" class="floating-wa" target="_blank">
+            <i class="fab fa-whatsapp"></i>i>
+    </a>a>
+
+    <!-- Navigation -->
+    <nav>
+              <div class="nav-container">
+                            <div class="logo" onclick="resetView()">URPERFUME</div>div>
+
+                            <div class="nav-links">
+                                              <a href="#home" onclick="resetView()" data-i18n="nav.home">Home</a>a>
+                                              <a href="#collec
+    </nav></title>
+  </head>
