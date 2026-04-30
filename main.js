@@ -1,3 +1,14 @@
+// FORCED PRELOADER REMOVAL (Safety)
+const forceHide = () => {
+        const pre = document.getElementById('preloader');
+        if (pre) {
+                    pre.style.opacity = '0';
+                    setTimeout(() => pre.style.display = 'none', 500);
+        }
+};
+setTimeout(forceHide, 2000);
+window.addEventListener('load', forceHide);
+
 /* 
     UrPerfume - Logic & Animations
 */
