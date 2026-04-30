@@ -1,1514 +1,1392 @@
-let cart = [];
-let discount = 0;
+/* 
+    UrPerfume - Logic & Animations
+*/
 
+document.addEventListener('DOMContentLoaded', () => {
+      initPreloader();
+      initCustomCursor();
+      initHeroAnimations();
+      initMarquee();
+      initScrollAnimations();
+      updateLanguageUI();
+      initAdminAccess(); // Initialize hidden door
+
+                              // Safety timeout to hide preloader no matter what (e.g. if images fail)
+                              setTimeout(() => {
+                                        const preloader = document.getElementById('preloader');
+                                        if (preloader && preloader.style.transform !== 'translateY(-100%)') {
+                                                      if (typeof gsap !== 'undefined') {
+                                                                        gsap.to('#preloader', {
+                                                                                              y: '-100%',
+                                                                                              duration: 1,
+                                                                                              ease: 'expo.inOut'
+                                                                        });
+                                                      } else {
+                                                                        preloader.style.display = 'none';
+                                                      }
+                                        }
+                              }, 4000);
+
+                              // Navigation Scroll Effect
+                              window.addEventListener('scroll', () => {
+                                        const nav = document.querySelector('nav');
+                                        if (window.scrollY > 50) {
+                                                      nav.classList.add('scrolled');
+                                        } else {
+                                                      nav.classList.remove('scrolled');
+                                        }
+                              });
+});
+
+// 1. Preloader
+function initPreloader() {
+      const tl = gsap.timeline();
+
+    tl.to('.progress-inner', {
+              width: '100%',
+              duration: 2,
+              ease: 'power2.inOut'
+    })
+      .to('#preloader', {
+                y: '-100%',
+                duration: 1,
+                ease: 'expo.inOut'
+      })
+      .from('.nav-container', {
+                y: -50,
+                opacity: 0,
+                duration: 1,
+                ease: 'expo.out'
+      }, '-=0.5')
+      .from('.hero-content > *', {
+                y: 50,
+                opacity: 0,
+                stagger: 0.2,
+                duration: 1,
+                ease: 'expo.out'
+      }, '-=0.8')
+      .from('.hero-visual .floating-pack', {
+                scale: 0.8,
+                opacity: 0,
+                stagger: 0.2,
+                duration: 1.5,
+                ease: 'expo.out'
+      }, '-=1');
+}
+
+// 2. Custom Cursor with LERP (Smooth Follow)
+function initCustomCursor() {
+      const cursor = document.getElementById('cursor');
+      const follower = document.getElementById('cursor-follower');
+
+    let mouseX = 0, mouseY = 0;
+      let cursorX = 0, cursorY = 0;
+      let followerX = 0, followerY = 0;
+
+    document.addEventListener('mousemove', (e) => {
+              mouseX = e.clientX;
+              mouseY = e.clientY;
+    });
+
+    function animate() {
+              // LERP for smooth movement (Increased factors for "Fast & Smooth")
+          cursorX += (mouseX - cursorX) * 0.25;
+              cursorY += (mouseY - cursorY) * 0.25;
+              followerX += (mouseX - followerX) * 0.15;
+              followerY += (mouseY - followerY) * 0.15;
+
+          // Centering offsets (4px for cursor, 20px for follower)
+          cursor.style.transform = `translate3d(${cursorX - 4}px, ${cursorY - 4}px, 0)`;
+              follower.style.transform = `translate3d(${followerX - 20}px, ${followerY - 20}px, 0)`;
+
+          requestAnimationFrame(animate);
+    }
+      animate();
+
+    // Hover effect for interactive elements
+    const updateHoverListeners = () => {
+              const links = document.querySelectorAll('a, button, .product-card, .collection-card, .search-btn, .marquee-item, .lang-switcher span, .qty-btn, .remove-item, .floating-wa');
+              links.forEach(link => {
+                            link.addEventListener('mouseenter', () => {
+                                              cursor.classList.add('active');
+                                              follower.classList.add('active');
+                            });
+                            link.addEventListener('mouseleave', () => {
+                                              cursor.classList.remove('active');
+                                              follower.classList.remove('active');
+                            });
+              });
+    };
+      updateHoverListeners();
+
+    // Re-bind when grid/cart changes
+    const observer = new MutationObserver(updateHoverListeners);
+      observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// 3. Hero Animations (Floating movement)
+function initHeroAnimations() {
+      gsap.to('#pack-1', {
+                y: 20,
+                duration: 3,
+                repeat: -1,
+                yoyo: true,
+                ease: 'sine.inOut'
+      });
+      gsap.to('#pack-2', {
+                y: -30,
+                duration: 4,
+                repeat: -1,
+                yoyo: true,
+                ease: 'sine.inOut'
+      });
+      gsap.to('#pack-3', {
+                y: 15,
+                duration: 3.5,
+                repeat: -1,
+                yoyo: true,
+                ease: 'sine.inOut'
+      });
+
+    // Parallax effect on mouse move
+    document.querySelector('.hero').addEventListener('mousemove', (e) => {
+              const { clientX, clientY } = e;
+              const xPos = (clientX / window.innerWidth - 0.5) * 50;
+              const yPos = (clientY / window.innerHeight - 0.5) * 50;
+
+                                                             gsap.to('.hero-visual', {
+                                                                           x: xPos,
+                                                                           y: yPos,
+                                                                           duration: 1,
+                                                                           ease: 'power2.out'
+                                                             });
+    });
+}
+
+// 0. Language & Translation System
+let currentLang = localStorage.getItem('urperfume-lang') || 'en';
+const translations = {
+      en: {
+                'nav.home': 'Home',
+                'nav.collections': 'Collections',
+                'nav.about': 'Our Story',
+                'hero.subtitle': 'Premium Decant Collection',
+                'hero.title': 'Experience Luxury One Drop at a Time',
+                'hero.desc': 'Original fragrances decanted into premium 10ml travel packs. Authenticity guaranteed, starting from 100 DH.',
+                'hero.shop': 'Shop Collections',
+                'hero.packs': 'Exclusive Packs',
+                'hero.scroll': 'Scroll to explore',
+                'marquee.title': 'Trending Now',
+                'coll.niche.title': 'Exclusive Niche',
+                'coll.niche.desc': 'Luxury masterpieces from Xerjoff, Creed, LV, and more.',
+                'coll.niche.btn': 'Explore Niche',
+                'coll.designer.title': 'Designer Collection',
+                'coll.designer.desc': 'Popular classics and modern favorites.',
+                'coll.designer.btn': 'Explore Designer',
+                'coll.pack.title': 'Luxury Sets',
+                'coll.pack.desc': 'Complete fragrance rituals and gift sets.',
+                'coll.pack.btn': 'Explore Packs',
+                'coll.all.title': 'Full Collection',
+                'coll.all.desc': 'Browse our entire catalog of 60+ premium scents.',
+                'coll.all.btn': 'See All',
+                'about.title': 'Our Story',
+                'about.story': 'UrPerfume was founded with a single mission: to make the         'about.story': 'UrPerfume was founded with a single mission: to make the world\'s most luxurious scents accessible to everyone. We offer professional decants - precision-poured samples that allow you to experience luxury without the full-bottle price tag.',
+          'about.originality': 'Every drop we provide is 100% original, decanted directly from the authentic brand bottles. No compromises, no imitations.',
+          'about.contact': 'Need more information? We\'re here to help.',
+          'about.wa': 'Message us on WhatsApp',
+          'products.back': 'Back to Collections',
+          'cart.title': 'Your Collection',
+          'cart.apply': 'Apply',
+          'cart.total': 'Total:',
+          'cart.checkout': 'Checkout',
+          'cart.confirm': 'Confirm Order (WhatsApp)',
+          'cart.continue': 'Continue Shopping'
+},
+    fr: {
+              'nav.home': 'Accueil',
+                        'nav.collections': 'Collections',
+                        'nav.about': 'Notre Histoire',
+                        'hero.subtitle': 'Collection Premium de Decants',
+                        'hero.title': 'Decouvrez le Luxe Goutte par Goutte',
+                        'hero.desc': 'Parfums originaux decantes dans des flacons premium de 10ml. Authenticite garantie, a partir de 100 DH.',
+                        'hero.shop': 'Voir les Collections',
+                        'hero.packs': 'Packs Exclusifs',
+                        'hero.scroll': 'Defiler pour explorer',
+                        'marquee.title': 'Tendances du Moment',
+                        'coll.niche.title': 'Niche Exclusive',
+                        'coll.niche.desc': 'Chefs-d\'oeuvre de Xerjoff, Creed, LV et plus.',
+                        'coll.niche.btn': 'Explorer Niche',
+                        'coll.designer.title': 'Collection Designer',
+                        'coll.designer.desc': 'Classiques populaires et favoris modernes.',
+                        'coll.designer.btn': 'Explorer Designer',
+                        'coll.pack.title': 'Coffrets de Luxe',
+                        'coll.pack.desc': 'Rituels complets et coffrets cadeaux.',
+                        'coll.pack.btn': 'Explorer Packs',
+                        'coll.all.title': 'Collection Complete',
+                        'coll.all.desc': 'Parcourez notre catalogue de plus de 60 parfums.',
+                        'coll.all.btn': 'Voir Tout',
+                        'about.title': 'Notre Histoire',
+                        'about.story': 'UrPerfume a ete fonde avec une mission simple : rendre les parfums les plus luxueux accessibles a tous. Nous proposons des decants professionnels qui vous permettent de vivre le luxe sans payer le prix fort d\'un flacon complet.',
+                        'about.originality': 'Chaque goutte est 100% originale, decantee directement des flacons authentiques. Aucun compromis, aucune imitation.',
+                        'about.contact': 'Besoin de plus d\'informations ? Nous sommes la.',
+                        'about.wa': 'Contactez-nous sur WhatsApp',
+                        'products.back': 'Retour aux Collections',
+                        'cart.title': 'Votre Panier',
+                        'cart.apply': 'Appliquer',
+                        'cart.total': 'Total:',
+                        'cart.checkout': 'Commander',
+                        'cart.confirm': 'Confirmer (WhatsApp)',
+                        'cart.continue': 'Continuer mes achats'
+    },
+    ar: {
+        'nav.home':         'nav.home': 'Home',
+                  'nav.collections': 'Collections',
+                  'nav.about': 'Our Story',
+                  'hero.subtitle': 'Premium Decants Collection',
+                  'hero.title': 'Experience Luxury Drop by Drop',
+                  'hero.desc': 'Original perfumes decanted into 10ml premium bottles. Guaranteed authenticity, starting from 100 DH.',
+                  'hero.shop': 'Shop Collections',
+                  'hero.packs': 'Exclusive Packs',
+                  'hero.scroll': 'Scroll to explore',
+                  'marquee.title': 'Trending Now',
+                  'coll.niche.title': 'Exclusive Niche',
+                  'coll.niche.desc': 'Masterpieces from Xerjoff, Creed, LV and more.',
+                  'coll.niche.btn': 'Explore Niche',
+                  'coll.designer.title': 'Designer Collection',
+                  'coll.designer.desc': 'Popular classics and modern favorites.',
+                  'coll.designer.btn': 'Explore Designer',
+                  'coll.pack.title': 'Luxury Sets',
+                  'coll.pack.desc': 'Complete scent rituals and gift sets.',
+                  'coll.pack.btn': 'Explore Packs',
+                  'coll.all.title': 'Complete Collection',
+                  'coll.all.desc': 'Browse our entire catalog of 60+ fragrances.',
+                  'coll.all.btn': 'See All',
+                  'about.title': 'Our Story',
+                  'about.story': 'UrPerfume was founded with a single mission: to make the world\'s most luxurious scents accessible to everyone.',
+                  'about.originality': 'Every drop we provide is 100% original.',
+                  'about.contact': 'Need more information?',
+                  'about.wa': 'Message us on WhatsApp',
+                  'products.back': 'Back to Collections',
+                  'cart.title': 'Your Collection',
+                  'cart.apply': 'Apply',
+                  'cart.total': 'Total:',
+                  'cart.checkout': 'Checkout',
+                  'cart.confirm': 'Confirm Order (WhatsApp)',
+                  'cart.continue': 'Continue Shopping'
+    }
+};
+
+let currentLanguage = localStorage.getItem('language') || 'en';
+
+function setLanguage(lang) {
+      currentLanguage = lang;
+      localStorage.setItem('language', lang);
+
+    document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+              const key = el.getAttribute('data-i18n');
+              if (translations[lang][key]) {
+                            if (el.tagName === 'INPUT' && el.type === 'button') {
+                                              el.value = translations[lang][key];
+                            } else if (el.placeholder) {
+                                              el.placeholder = translations[lang][key];
+                            } else {
+                                              el.textContent = translations[lang][key];
+                            }
+              }
+    });
+
+    // Update active state in language switchers
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+              btn.classList.toggle('active', btn.getAttribute('onclick').includes(lang));
+    });
+}
+// Initialize language on load
+document.addEventListener('DOMContentLoaded', () => {
+      setLanguage(currentLanguage);
+});
+
+// Products Data
 const products = [
-{
-id: 1,
-brand: 'Christian Dior',
-name: 'Sauvage Elixir',
-type: 'designer',
-originalPrice: 210,
-price: 180,
-image: 'assets/sauvage_elixir.webp',
-notes: 'Grapefruit, Cinnamon, Cardamom | 10ml'
-},
-{
-id: 2,
-brand: 'Christian Dior',
-name: 'Sauvage EDP',
-type: 'designer',
-originalPrice: 150,
-price: 120,
-image: 'assets/sauvage_edp.webp',
-notes: 'Bergamot, Sichuan Pepper, Vanilla | 10ml'
-},
-{
-id: 3,
-brand: 'Yves Saint Laurent',
-name: 'Myslf EDP',
-type: 'designer',
-originalPrice: 160,
-price: 130,
-image: 'assets/myslf.webp',
-notes: 'Bergamot, Orange Blossom, Patchouli | 10ml'
-},
-{
-id: 4,
-brand: 'Yves Saint Laurent',
-name: 'Y EDP',
-type: 'designer',
-originalPrice: 150,
-price: 120,
-image: 'assets/y_edp.webp',
-notes: 'Apple, Ginger, Sage, Juniper | 10ml'
-},
-{
-id: 5,
-brand: 'Yves Saint Laurent',
-name: 'Y Elixir',
-type: 'designer',
-originalPrice: 200,
-price: 160,
-image: 'assets/y_elixir.webp',
-notes: 'Lavender, Geranium, Oud | 10ml'
-},
-{
-id: 6,
-brand: 'Yves Saint Laurent',
-name: 'Libre EDP',
-type: 'designer',
-originalPrice: 170,
-price: 140,
-image: 'assets/libre_edp.webp',
-notes: 'Lavender, Orange Blossom, Musk | 10ml'
-},
-{
-id: 7,
-brand: 'Yves Saint Laurent',
-name: 'Libre Intense',
-type: 'designer',
-originalPrice: 185,
-price: 150,
-image: 'assets/libre_intense.webp',
-notes: 'French Lavender, Moroccan Orange Blossom, Orchid | 10ml'
-},
-{
-id: 8,
-brand: 'Giorgio Armani',
-  name: 'Stronger With You Intensely',
-  type: 'designer',
-  originalPrice: 140,
-  price: 110,
-  image: 'assets/swy_intensely.webp',
-  notes: 'Pink Pepper, Juniper, Vanilla | 10ml'
-  },
-  {
-  id: 9,
-  brand: 'Giorgio Armani',
-  name: 'Stronger With You Absolutely',
-  type: 'designer',
-  originalPrice: 160,
-  price: 130,
-  image: 'assets/swy_absolutely.webp',
-  notes: 'Rum, Lavender, Vanilla | 10ml'
-  },
-  {
-  id: 10,
-  brand: 'Giorgio Armani',
-  name: 'Acqua Di Gio Profondo',
-  type: 'designer',
-  originalPrice: 150,
-  price: 120,
-  image: 'assets/adg_profondo.webp',
-  notes: 'Sea Notes, Rosemary, Cypress | 10ml'
-  },
-  {
-  id: 11,
-  brand: 'Giorgio Armani',
-  name: 'Acqua Di Gio Parfum',
-  type: 'designer',
-  originalPrice: 170,
-  price: 140,
-  image: 'assets/adg_parfum.webp',
-  notes: 'Bergamot, Rosemary, Geranium | 10ml'
-  },
-  {
-  id: 12,
-  brand: 'Giorgio Armani',
-  name: 'Si EDP',
-  type: 'designer',
-  originalPrice: 160,
-  price: 130,
-  image: 'assets/si_edp.webp',
-  notes: 'Cassis, May Rose, Freesia | 10ml'
-  },
-  {
-  id: 13,
-  brand: 'Jean Paul Gaultier',
-  name: 'Le Male Elixir',
-  type: 'designer',
-  originalPrice: 180,
-  price: 150,
-  image: 'assets/le_male_elixir.webp',
-  notes: 'Lavender, Mint, Vanilla, Benzoin | 10ml'
-  },
-  {
-  id: 14,
-  brand: 'Jean Paul Gaultier',
-  name: 'Le Male Le Parfum',
-  type: 'designer',
-  originalPrice: 160,
-  price: 130,
-  image: 'assets/le_male_parfum.webp',
-  notes: 'Cardamom, Lavender, Iris, Vanilla | 10ml'
-  },
-  {
-  id: 15,
-  brand: 'Jean Paul Gaultier',
-  name: 'Ultra Male',
-  type: 'designer',
-  originalPrice: 150,
-  price: 120,
-  image: 'assets/ultra_male.webp',
-  notes: 'Pear, Lavender, Mint, Cinnamon | 10ml'
-  },
-  {
-  id: 16,
-  brand: 'Jean Paul Gaultier',
-  name: 'Scandal Le Parfum Homme',
-  type: 'designer',
-  originalPrice: 160,
-  price: 130,
-  image: 'assets/scandal_parfum.webp',
-  notes: 'Geranium, Tonka Bean, Sandalwood | 10ml'
-  },
-  {
-  id: 17,
-  brand: 'Jean Paul Gaultier',
-  name: 'Scandal Le Parfum Femme',
-  type: 'designer',
-  originalPrice: 170,
-  price: 140,
-  image: 'assets/scandal_femme.webp',
-  notes: 'Jasmine, Salted Caramel, Vanilla | 10ml'
-  },
-  {
-  id: 18,
-  brand: 'Jean Paul Gaultier',
-  name: 'La Belle EDP',
-  type: 'designer',
-  originalPrice: 160,
-  price: 130,
-  image: 'assets/la_belle.webp',
-  notes: 'Pear, Bergamot, Vanilla | 10ml'
-  },
-  {
-  id: 19,
-  brand: 'Parfums de Marly',
-  name: 'Layton',
-  type: 'niche',
-  originalPrice: 350,
-  price: 280,
-  image: 'assets/pdm_layton.webp',
-  notes: 'Apple, Lavender, Vanilla | 10ml'
-  },
-  {
-  id: 20,
-  brand: 'Parfums de Marly',
-  name: 'Layton Exclusif',
-  type: 'niche',
-  originalPrice: 380,
-  price: 320,
-  image: 'assets/pdm_layton_exclusif.webp',
-  notes: 'Almond, Civet, Guaiac Wood | 10ml'
-  },
-  {
-  id: 21,
-  brand: 'Parfums de Marly',
-  name: 'Haltane',
-  type: 'niche',
-  originalPrice: 360,
-  price: 300,
-  image: 'assets/pdm_haltane.webp',
-  notes: 'Clary Sage, Lavender, Oud | 10ml'
-  },
-  {
-  id: 22,
-  brand: 'Parfums de Marly',
-  name: 'Althair',
-  type: 'niche',
-  originalPrice: 360,
-  price: 300,
-  image: 'assets/pdm_althair.webp',
-  notes: 'Orange Blossom, Cinnamon, Bourbon Vanilla | 10ml'
-  },
-  {
-  id: 23,
-  brand: 'Parfums de Marly',
-  name: 'Delina EDP',
-  type: 'niche',
-  originalPrice: 350,
-  price: 280,
-  image: 'assets/pdm_delina.webp',
-  notes: 'Rhubarb, Lychee, Turkish Rose | 10ml'
-  },
-  {
-  id: 24,
-  brand: 'Parfums de Marly',
-  name: 'Delina Exclusif',
-  type: 'niche',
-  originalPrice: 380,
-  price: 320,
-  image: 'assets/pdm_delina_exclusif.webp',
-  notes: 'Bergamot, Pear, Incense, Rose | 10ml'
-  },
-  {
-  id: 25,
-  brand: 'Initio Parfums',
-  name: 'Side Effect',
-  type: 'niche',
-  originalPrice: 350,
-  price: 290,
-  image: 'assets/initio_side_effect.webp',
-  notes: 'Rum, Tobacco, Cinnamon, Vanilla | 10ml'
-  },
-  {
-  id: 26,
-  brand: 'Initio Parfums',
-  name: 'Oud For Greatness',
-  type: 'niche',
-  originalPrice: 400,
-  price: 350,
-  image: 'assets/initio_oud_greatness.webp',
-  notes: 'Saffron, Nutmeg, Lavender, Oud | 10ml'
-  },
-  {
-  id: 27,
-  brand: 'Xerjoff',
-  name: 'Naxos',
-  type: 'niche',
-  originalPrice: 350,
-  price: 280,
-  image: 'assets/xerjoff_naxos.webp',
-  notes: 'Honey, Tobacco, Lavender | 10ml'
-  },
-  {
-  id: 28,
-  brand: 'Xerjoff',
-  name: 'Erba Pura',
-  type: 'niche',
-  originalPrice: 350,
-  price: 280,
-  image: 'assets/xerjoff_erba_pura.webp',
-  notes: 'Sicilian Fruits, Musk, Vanilla | 10ml'
-  },
-  {
-  id: 29,
-  brand: 'Xerjoff',
-  name: 'Alexandria II',
-  type: 'niche',
-  originalPrice: 450,
-  price: 380,
-  image: 'assets/xerjoff_alexandria.webp',
-  notes: 'Apple, Lavender, Rosewood, Oud | 10ml'
-  },
-  {
-  id: 30,
-  brand: 'Amouage',
-  name: 'Interlude Man',
-  type: 'niche',
-  originalPrice: 350,
-  price: 280,
-  image: 'assets/amouage_interlude.webp',
-  notes: 'Oregano, Frankincense, Leather | 10ml'
-  },
-  {
-  id: 31,
-  brand: 'Amouage',
-  name: 'Reflection Man',
-  type: 'niche',
-  originalPrice: 350,
-  price: 280,
-  image: 'assets/amouage_reflection.webp',
-  notes: 'Rosemary, Iris, Neroli | 10ml'
-  },
-  {
-  id: 32,
-  brand: 'Amouage',
-  name: 'Guidance',
-  type: 'niche',
-  originalPrice: 400,
-  price: 340,
-  image: 'assets/amouage_guidance.webp',
-  notes: 'Pear, Frankincense, Hazelnut, Rose | 10ml'
-  },
-  {
-  id: 33,
-  brand: 'Byredo',
-  name: 'Bal d\'Afrique',
-  type: 'niche',
-  originalPrice: 320,
-  price: 260,
-  image: 'assets/byredo_bal_afrique.webp',
-  notes: 'Lemon, Neroli, Marigold | 10ml'
-  },
-  {
-  id: 34,
-  brand: 'Byredo',
-  name: 'Gypsy Water',
-  type: 'niche',
-  originalPrice: 320,
-  price: 260,
-  image: 'assets/byredo_gypsy_water.webp',
-  notes: 'Juniper, Lemon, Pine Needle | 10ml'
-  },
-  {
-  id: 35,
-  brand: 'Maison Francis Kurkdjian',
-  name: 'Baccarat Rouge 540 EDP',
-  type: 'niche',
-  originalPrice: 450,
-  price: 380,
-  image: 'assets/mfk_br540_edp.webp',
-  notes: 'Saffron, Jasmine, Amberwood | 10ml'
-  },
-  {
-  id: 36,
-  brand: 'Maison Francis Kurkdjian',
-  name: 'Baccarat Rouge 540 Extrait',
-  type: 'niche',
-  originalPrice: 550,
-  price: 480,
-  image: 'assets/mfk_br540_extrait.webp',
-  notes: 'Bitter Almond, Saffron, Cedar | 10ml'
-  },
-  {
-  id: 37,
-  brand: 'Maison Francis Kurkdjian',
-  name: 'Grand Soir',
-  type: 'niche',
-  originalPrice: 350,
-  price: 290,
-  image: 'assets/mfk_grand_soir.webp',
-  notes: 'Amber, Benzoin, Vanilla | 10ml'
-  },
-  {
-  id: 38,
-  brand: 'Creed',
-  name: 'Aventus',
-  type: 'niche',
-  originalPrice: 380,
-  price: 320,
-  image: 'assets/creed_aventus.webp',
-  notes: 'Pineapple, Birch, Musk | 10ml'
-  },
-  {
-  id: 39,
-  brand: 'Creed',
-  name: 'Aventus For Her',
-  type: 'niche',
-  originalPrice: 380,
-  price: 320,
-  image: 'assets/creed_aventus_her.webp',
-  notes: 'Green Apple, Pink Berries, Patchouli | 10ml'
-  },
-  {
-  id: 40,
-  brand: 'Creed',
-  name: 'Green Irish Tweed',
-  type: 'niche',
-  originalPrice: 350,
-  price: 280,
-  image: 'assets/creed_git.webp',
-  notes: 'Lemon, Verbena, Iris, Violet Leaf | 10ml'
-  },
-  {
-  id: 41,
-  brand: 'Kilian Paris',
-  name: 'Angels\' Share',
-  type: 'niche',
-  originalPrice: 400,
-  price: 350,
-  image: 'assets/kilian_angels_share.webp',
-  notes: 'Cognac, Cinnamon, Tonka Bean | 10ml'
-  },
-  {
-  id: 42,
-  brand: 'Kilian Paris',
-  name: 'Black Phantom',
-  type: 'niche',
-  originalPrice: 380,
-  price: 320,
-  image: 'assets/kilian_black_phantom.webp',
-  notes: 'Coffee, Rum, Sugar Cane, Dark Chocolate | 10ml'
-  },
-  {
-  id: 43,
-  brand: 'Kilian Paris',
-  name: 'Good Girl Gone Bad',
-  type: 'niche',
-  originalPrice: 380,
-  price: 320,
-  image: 'assets/kilian_good_girl.webp',
-  notes: 'Osmanthus, Jasmine, May Rose | 10ml'
-  },
-  {
-  id: 44,
-  brand: 'Nishane',
-  name: 'Hacivat',
-  type: 'niche',
-  originalPrice: 350,
-  price: 280,
-  image: 'assets/nishane_hacivat.webp',
-  notes: 'Pineapple, Grapefruit, Oakmoss | 10ml'
-  },
-  {
-  id: 45,
-  brand: 'Nishane',
-  name: 'Ani',
-  type: 'niche',
-  originalPrice: 350,
-  price: 280,
-  image: 'assets/nishane_ani.webp',
-  notes: 'Ginger, Bergamot, Vanilla | 10ml'
-  },
-  {
-  id: 46,
-  brand: 'Nasomatto',
-  name: 'Black Afgano',
-  type: 'niche',
-  originalPrice: 400,
-  price: 320,
-  image: 'assets/nasomatto_black_afgano.webp',
-  notes: 'Cannabis, Resin, Tobacco, Coffee | 10ml'
-  },
-  {
-  id: 47,
-  brand: 'Nasomatto',
-  name: 'Baraonda',
-  type: 'niche',
-  originalPrice: 400,
-  price: 320,
-  image: 'assets/nasomatto_baraonda.webp',
-  notes: 'Whiskey, Wood, Ambrette | 10ml'
-  },
-  {
-  id: 71,
-  brand: 'Paco Rabanne',
-  name: 'Invictus Victory Elixir',
-  type: 'designer',
-  originalPrice: 150,
-  price: 120,
-  image: 'assets/invictus_victory_elixir.webp',
-  notes: 'Amber, Vanilla, Tonka Bean | 10ml'
-  },
-  {
-  id: 72,
-  brand: 'Paco Rabanne',
-  name: 'Million Lucky',
-  type: 'designer',
-  originalPrice: 140,
-  price: 110,
-  image: 'assets/million_lucky.webp',
-  notes: 'Hazelnut, Honey, Cedar | 10ml'
-  },
-  {
-  id: 74,
-  brand: 'Valentino',
-  name: 'Born In Roma Intense',
-  type: 'designer',
-  originalPrice: 170,
-  price: 140,
-  image: 'assets/valentino_roma_intense.webp',
-  notes: 'Vanilla, Ginger, Vetiver | 10ml'
-  },
-  {
-  id: 75,
-  brand: 'Valentino',
-  name: 'Born In Roma Coral Fantasy',
-  type: 'designer',
-  originalPrice: 160,
-  price: 130,
-  image: 'assets/valentino_roma_coral.webp',
-  notes: 'Red Apple, Tobacco, Sage | 10ml'
-  },
-  {
-  id: 76,
-  brand: 'Jean Paul Gaultier',
-  name: 'Paradise Garden',
-  type: 'designer',
-  originalPrice: 180,
-  price: 150,
-  image: 'assets/paradise_garden.webp',
-  notes: 'Coconut, Ginger, Mint | 10ml'
-  },
-  {
-  id: 77,
-  brand: 'Giorgio Armani',
-  name: 'Stronger With You Amber',
-  type: 'designer',
-  originalPrice: 165,
-  price: 135,
-  image: 'assets/swy_amber.webp',
-  notes: 'Amber, Lavender, Vanilla | 10ml'
-  },
-  {
-  id: 78,
-  brand: 'Tiziana Terenzi',
-  name: 'Kirke',
-  type: 'niche',
-  originalPrice: 320,
-  price: 250,
-  image: 'assets/tiziana_kirke.webp',
-  notes: 'Passion Fruit, Peach, Raspberry | 10ml'
-  },
-  {
-  id: 79,
-  brand: 'Tiziana Terenzi',
-  name: 'Cassiopea',
-  type: 'niche',
-  originalPrice: 320,
-  price: 250,
-  image: 'assets/tiziana_cassiopea.webp',
-  notes: 'Passion Fruit, Lemon, Cassis | 10ml'
-  },
-  {
-  id: 80,
-  brand: 'Orto Parisi',
-  name: 'Megamare',
-  type: 'niche',
-  originalPrice: 420,
-  price: 360,
-  image: 'assets/orto_parisi_megamare.webp',
-  notes: 'Sea Notes, Amber, Musk | 10ml'
-  },
-  {
-  id: 81,
-  brand: 'Orto Parisi',
-  name: 'Terroni',
-  type: 'niche',
-  originalPrice: 420,
-  price: 360,
-  image: 'assets/orto_parisi_terroni.webp',
-  notes: 'Smoke, Earth, Amber | 10ml'
-  },
-  {
-  id: 82,
-  brand: 'Dior',
-  name: 'Gris Dior',
-  type: 'niche',
-  originalPrice: 450,
-  price: 380,
-  image: 'assets/gris_dior.webp',
-  notes: 'Oakmoss, Rose, Bergamot | 10ml'
-  },
-  {
-  id: 83,
-  brand: 'Dior',
-  name: 'Oud Ispahan',
-  type: 'niche',
-  originalPrice: 450,
-  price: 380,
-  image: 'assets/oud_ispahan.webp',
-  notes: 'Oud, Rose, Sandalwood | 10ml'
-  },
-  {
-  id: 84,
-  brand: 'Guerlain',
-  name: 'Spiritueuse Double Vanille',
-  type: 'niche',
-  originalPrice: 500,
-  price: 420,
-  image: 'assets/guerlain_double_vanille.webp',
-  notes: 'Vanilla, Rum, Benzoin | 10ml'
-  },
-  {
-  id: 85,
-  brand: 'Guerlain',
-  name: 'Tobacco Honey',
-  type: 'niche',
-  originalPrice: 550,
-  price: 460,
-  image: 'assets/guerlain_tobacco_honey.webp',
-  notes: 'Honey, Tobacco, Vanilla | 10ml'
-  },
-  {
-  id: 86,
-  brand: 'Viktor & Rolf',
-  name: 'Spicebomb Extreme',
-  type: 'designer',
-  originalPrice: 160,
-  price: 130,
-  image: 'assets/spicebomb_extreme.webp',
-  notes: 'Black Pepper, Cumin, Tobacco, Vanilla | 10ml'
-  },
-  {
-  id: 87,
-  brand: 'Viktor & Rolf',
-  name: 'Spicebomb Night Vision',
-  type: 'designer',
-  originalPrice: 150,
-  price: 120,
-  image: 'assets/spicebomb_nightvision.webp',
-  notes: 'Green Apple, Black Spice, Geranium | 10ml'
-  },
-  {
-  id: 88,
-  brand: 'Prada',
-  name: 'Luna Rossa Ocean',
-  type: 'designer',
-  originalPrice: 150,
-  price: 120,
-  image: 'assets/prada_ocean.webp',
-  notes: 'Bergamot, Iris, Vetiver | 10ml'
-  },
-  {
-  id: 89,
-  brand: 'Prada',
-  name: 'Luna Rossa Black',
-  type: 'designer',
-  originalPrice: 160,
-  price: 130,
-  image: 'assets/prada_black.webp',
-  notes: 'Bergamot, Angelica, Coumarin | 10ml'
-  },
-  {
-  id: 90,
-  brand: 'Bottega Veneta',
-  name: 'Bottega Veneta EDP',
-  type: 'designer',
-  originalPrice: 180,
-  price: 150,
-  image: 'assets/bottega_veneta.webp',
-  notes: 'Pink Pepper, Jasmine, Leather | 10ml'
-  },
-  {
-  id: 91,
-  brand: 'Burberry',
-  name: 'Goddess EDP',
-  type: 'designer',
-  originalPrice: 170,
-  price: 140,
-  image: 'assets/burberry_goddess.webp',
-  notes: 'Vanilla, Lavender, Cacao | 10ml'
-  },
-  {
-  id: 92,
-  brand: 'Azzaro',
-  name: 'The Most Wanted Parfum',
-  type: 'designer',
-  originalPrice: 150,
-  price: 120,
-  image: 'assets/azzaro_most_wanted.webp',
-  notes: 'Ginger, Wood, Bourbon Vanilla | 10ml'
-  },
-  {
-  id: 93,
-  brand: 'Azzaro',
-  name: 'Wanted By Night',
-  type: 'designer',
-  originalPrice: 140,
-  price: 110,
-  image: 'assets/azzaro_wanted_night.webp',
-  notes: 'Cinnamon, Mandarin, Tobacco | 10ml'
-  },
-  {
-  id: 50,
-  brand: 'Carolina Herrera',
-  name: 'Good Girl EDP',
-  type: 'designer',
-  originalPrice: 160,
-  price: 130,
-  image: 'assets/good_girl.webp',
-  notes: 'Almond, Coffee, Tuberose | 10ml'
-  },
-  {
-  id: 63,
-  brand: 'Carolina Herrera',
-  name: 'Good Girl Blush',
-  type: 'designer',
-  originalPrice: 165,
-  price: 135,
-  image: 'assets/good_girl_blush.webp',
-  notes: 'Bergamot, Peony, Vanilla | 10ml'
-  },
-  {
-  id: 64,
-  brand: 'Carolina Herrera',
-  name: 'Good Girl New York Bowtastic',
-  type: 'designer',
-  originalPrice: 170,
-  price: 130,
-  image: 'assets/good_girl_bowtastic.webp',
-  notes: 'Tuberose, Jasmine, Tonka | 10ml'
-  },
-  {
-  id: 48,
-  brand: 'Carolina Herrera',
-  name: 'Bad Boy',
-  type: 'designer',
-  originalPrice: 130,
-  price: 100,
-  image: 'assets/bad_boy.webp',
-  notes: 'Pepper, Cedar, Cacao | 10ml'
-  },
-  {
-  id: 49,
-  brand: 'Paco Rabanne',
-  name: 'One Million Gold',
-  type: 'designer',
-  originalPrice: 130,
-  price: 100,
-  image: 'assets/one_million_gold.webp',
-  notes: 'Mandarin, Cinnamon, Leather | 10ml'
-  },
-  {
-  id: 66,
-  brand: 'Paco Rabanne',
-  name: 'Phantom Elixir de RABANNE',
-  type: 'designer',
-  originalPrice: 110,
-  price: 90,
-  image: 'assets/phantom_elixir.webp',
-  notes: 'Lavender, Vanilla, Patchouli | 10ml'
-  },
-  {
-  id: 51,
-  brand: 'Paco Rabanne',
-  name: 'Fame',
-  type: 'designer',
-  originalPrice: 135,
-  price: 100,
-  image: 'assets/fame.webp',
-  notes: 'Mango, Jasmine, Incense | 10ml'
-  },
-  {
-  id: 65,
-  brand: 'Paco Rabanne',
-  name: 'One Million Rabanne Woman',
-  type: 'designer',
-  originalPrice: 120,
-  price: 100,
-  image: 'assets/one_million_woman.webp',
-  notes: 'Neroli, Raspberry, Jasmine | 10ml'
-  },
-  {
-  id: 52,
-  brand: 'Tom Ford',
-  name: 'Ombre Leather',
-  type: 'niche',
-  originalPrice: 250,
-  price: 199,
-  image: 'assets/ombre_leather_v1.webp',
-  secondaryImage: 'assets/ombre_leather_v2.webp',
-  notes: 'Black Leather, Cardamom, Patchouli | 10ml'
-  },
-  {
-  id: 54,
-  brand: 'Kayali',
-  name: 'Invite Only Amber 23',
-  type: 'niche',
-  originalPrice: 170,
-  price: 120,
-  image: 'assets/kayali_invite_only.webp',
-  notes: 'Amber, Chocolate, Vanilla | 10ml'
-  },
-  {
-  id: 67,
-  brand: 'Kayali',
-  name: 'Lovefest Burning Cherry 48',
-  type: 'niche',
-  originalPrice: 200,
-  price: 140,
-  image: 'assets/kayali_lovefest.webp',
-  notes: 'Burning Cherry, Raspberry, Praline | 10ml'
-  },
-  {
-  id: 70,
-  brand: 'Lancome',
-  name: 'La Vie Est Belle EDP',
-  type: 'designer',
-  originalPrice: 150,
-  price: 120,
-  image: 'assets/la_vie_belle_elixir.webp',
-  notes: 'Raspberry, Violet, Cocoa | 10ml'
-  },
-  {
-  id: 73,
-  brand: 'Lancome',
-  name: 'La Vie Est Belle Elixir',
-  type: 'designer',
-  originalPrice: 180,
-  price: 150,
-  image: 'assets/la_vie_belle_elixir_new.webp',
-  notes: 'Raspberry, Violet, Cocoa | 10ml'
-  },
-  {
-  id: 56,
-  brand: 'Gucci',
-  name: 'Flora Gorgeous Jasmine',
-  type: 'designer',
-  originalPrice: 150,
-  price: 125,
-  image: 'assets/gucci_flora_jasmine.webp',
-  notes: 'Jasmine, Pear, Brown Sugar | 10ml'
-  },
-  {
-  id: 57,
-  brand: 'Gucci',
-  name: 'Flora Gorgeous Gardenia',
-  type: 'designer',
-  originalPrice: 170,
-  price: 140,
-  image: 'assets/gucci_flora_gardenia.webp',
-  notes: 'Gardenia, Red Berries, Frangipani | 10ml'
-  },
-  {
-  id: 58,
-  brand: 'Prada',
-  name: 'PRADA PARADOX EDP',
-  type: 'designer',
-  originalPrice: 200,
-  price: 150,
-  image: 'assets/prada_paradox.webp',
-  notes: 'Neroli, Amber, Musk | 10ml'
-  },
-  {
-  id: 59,
-  brand: 'Jimmy Choo',
-  name: 'I WANT CHOO EDP',
-  type: 'designer',
-  originalPrice: 180,
-  price: 140,
-  image: 'assets/i_want_choo.webp',
-  notes: 'Peach, Jasmine, Vanilla | 10ml'
-  },
-  {
-  id: 69,
-  brand: 'Givenchy',
-  name: 'Gentleman Society',
-  type: 'designer',
-  originalPrice: 150,
-  price: 120,
-  image: 'assets/gentleman_society.webp',
-  notes: 'Sage, Wild Narcissus, Vetiver | 10ml'
-  },
-  {
-  id: 60,
-  brand: 'Dolce & Gabbana',
-  name: 'Light Blue',
-  type: 'designer',
-  originalPrice: 150,
-  price: 100,
-  image: 'assets/light_blue.webp',
-  notes: 'Lemon, Marigold, Musk | 10ml'
-  },
+  {
+            id: 1,
+            name: "Xerjoff - Erba Pura",
+            brand: "Xerjoff",
+            category: "niche",
+            price: 250,
+            image: "assets/erba-pura.jpg",
+            description: "A delicious and modern blend of Mediterranean citrus and sweet fruits.",
+            notes: "Orange, Lemon, Bergamot, Mediterranean Fruits, White Musk, Amber, Vanilla",
+            stock: true
+  },
+  {
+            id: 2,
+            name: "Xerjoff - Naxos",
+            brand: "Xerjoff",
+            category: "niche",
+            price: 250,
+            image: "assets/naxos.jpg",
+            description: "A celebration of Sicily, deep and sensual with honey, tobacco and vanilla.",
+            notes: "Lavender, Bergamot, Lemon, Honey, Cinnamon, Cashmeran, Jasmine, Tobacco, Vanilla, Tonka Bean",
+            stock: true
+  },
+  {
+            id: 3,
+            name: "Xerjoff - Alexandria II",
+            brand: "Xerjoff",
+            category: "niche",
+            price: 450,
+            image: "assets/alexandria-ii.jpg",
+            description: "A majestic and complex oud fragrance with lavender and rose.",
+            notes: "Lavender, Palisander Rosewood, Cinnamon, Apple, Lily-of-the-Valley, Rose, Cedar, Sandalwood, Musk, Amber, Oud",
+            stock: true
+  },
+  {
+            id: 4,
+            name: "Creed - Aventus",
+            brand: "Creed",
+            category: "niche",
+            price: 280,
+            image: "assets/aventus.jpg",
+            description: "The ultimate masculine scent, fruity and woody with pineapple and birch.",
+            notes: "Pineapple, Bergamot, Black Currant, Apple, Birch, Patchouli, Moroccan Jasmine, Musk, Oak Moss, Ambergris, Vanilla",
+            stock: true
+  },
+  {
+            id: 5,
+            name: "Louis Vuitton - Imagination",
+            brand: "Louis Vuitton",
+            category: "niche",
+            price: 280,
+            image: "assets/imagination.jpg",
+            description: "An exceptional citrus fragrance with black tea and ginger.",
+            notes: "Citron, Calabrian Bergamot, Sicilian Orange, Nigerian Ginger, Ceylon Cinnamon, Neroli, Chinese Black Tea, Ambroxan, Guaiac Wood, Olibanum",
+            stock: true
+  },
+  {
+            id: 6,
+            name: "Louis Vuitton - Ombre Nomade",
+            brand: "Louis Vuitton",
+            category: "niche",
+            price: 320,
+            image: "assets/ombre-nomade.jpg",
+            description: "A dark and powerful oud fragrance with incense and raspberry.",
+            notes: "Oud Wood, Benzoin Tears, Incense, Raspberry",
+            stock: true
+  },
+  {
+            id: 7,
+            name: "Parfums de Marly - Layton",
+            brand: "Parfums de Marly",
+            category: "niche",
+            price: 250,
+            image: "assets/layton.jpg",
+            description: "A seductive oriental floral with apple, lavender and vanilla.",
+            notes: "Apple, Lavender, Bergamot, Mandarin Orange, Geranium, Violet, Jasmine, Vanilla, Cardamom, Sandalwood, Pepper, Guaiac Wood, Patchouli",
+            stock: true
+  },
+  {
+            id: 8,
+            name: "Parfums de Marly - Haltane",
+            brand: "Parfums de Marly",
+            category: "niche",
+            price: 250,
+            image: "assets/haltane.jpg",
+            description: "A contrast between tradition and innovation with oud and praline.",
+            notes: "Clary Sage, Lavender, Bergamot, Praline, Saffron, Agarwood (Oud), Cedar",
+            stock: true
+  },
+  {
+            id: 9,
+            name: "Initio - Side Effect",
+            brand: "Initio",
+            category: "niche",
+            price: 280,
+            image: "assets/side-effect.jpg",
+            description: "A bold and intoxicating blend of tobacco, vanilla and rum.",
+            notes: "Tobacco, Vanilla, Rum, Cinnamon",
+            stock: true
+  },
+  {
+            id: 10,
+            name: "Initio - Oud for Greatness",
+            brand: "Initio",
+            category: "niche",
+            price: 350,
+            image: "assets/oud-for-greatness.jpg",
+            description: "A mystical and enchanting oud with saffron and nutmeg.",
+            notes: "Saffron, Nutmeg, Lavender, Agarwood (Oud), Patchouli, Musk",
+            stock: true
+  },
+  {
+            id: 11,
+            name: "Amouage - Reflection Man",
+            brand: "Amouage",
+            category: "niche",
+            price: 250,
+            image: "assets/reflection-man.jpg",
+            description: "A clean and sophisticated floral woody fragrance.",
+            notes: "Rosemary, Pimento, May Rose, Orris Root, Jasmine, Neroli, Sandalwood, Patchouli, Vetiver, Cedar",
+            stock: true
+  },
+  {
+            id: 12,
+            name: "Amouage - Interlude Man",
+            brand: "Amouage",
+            category: "niche",
+            price: 250,
+            image: "assets/interlude-man.jpg",
+            description: "The 'Blue Beast' - a powerful incense and amber masterpiece.",
+            notes: "Oregano, Pepper, Bergamot, Incense, Amber, Labdanum, Opoponax, Leather, Oud, Patchouli, Sandalwood",
+            stock: true
+  },
+  {
+            id: 13,
+            name: "Maison Francis Kurkdjian - Baccarat Rouge 540",
+            brand: "MFK",
+            category: "niche",
+            price: 320,
+            image: "assets/br540.jpg",
+            description: "A unique and airy amber floral scent, sweet and sophisticated.",
+            notes: "Saffron, Jasmine, Amberwood, Ambergris, Fir Resin, Cedar",
+            stock: true
+  },
+  {
+            id: 14,
+            name: "Maison Francis Kurkdjian - Gentle Fluidity Gold",
+            brand: "MFK",
+            category: "niche",
+            price: 280,
+            image: "assets/gentle-fluidity-gold.jpg",
+            description: "A beautiful and comforting vanilla-centric fragrance.",
+            notes: "Juniper Berries, Nutmeg, Coriander, Musk, Amber, Vanilla, Woody Notes",
+            stock: true
+  },
+  {
+            id: 15,
+            name: "Byredo - Bal d'Afrique",
+            brand: "Byredo",
+            category: "niche",
+            price: 220,
+            image: "assets/bal-dafrique.jpg",
+            description: "A vibrant and joyful blend of citrus and African marigold.",
+            notes: "Amalfi Lemon, Tagetes, Black Currant, Bergamot, African Orange Flower, Violet, Cyclamen, Jasmine, Vetiver, Musk, Amber, Virginia Cedar",
+            stock: true
+  },
+  {
+            id: 16,
+            name: "Byredo - Gypsy Water",
+            brand: "Byredo",
+            category: "niche",
+            price: 220,
+            image: "assets/gypsy-water.jpg",
+            description: "A nomadic scent, woody and aromatic with juniper and lemon.",
+            notes: "Juniper, Lemon, Bergamot, Pepper, Pine Needles, Orris, Incense, Vanilla, Sandalwood, Amber",
+            stock: true
+  },
+  {
+            id: 17,
+            name: "Kilian - Angel's Share",
+            brand: "Kilian",
+            category: "niche",
+            price: 280,
+            image: "assets/angels-share.jpg",
+            description: "A warm and boozy fragrance reminiscent of cognac and oak.",
+            notes: "Cognac, Cinnamon, Tonka Bean, Oak, Praline, Vanilla, Sandalwood",
+            stock: true
+  },
+  {
+            id: 18,
+            name: "Kilian - Black Phantom",
+            brand: "Kilian",
+            category: "niche",
+            price: 280,
+            image: "assets/black-phantom.jpg",
+            description: "A dark and mysterious gourmand with coffee and rum.",
+            notes: "Rum, Sugar Cane, Dark Chocolate, Coffee, Caramel, Almond, Heliotrope, Sandalwood",
+            stock: true
+  },
+  {
+            id: 19,
+            name: "Dior - Sauvage Elixir",
+            brand: "Dior",
+            category: "designer",
+            price: 250,
+            image: "assets/sauvage-elixir.jpg",
+            description: "An extraordinary concentration, spicy and woody.",
+            notes: "Cinnamon, Nutmeg, Cardamom, Grapefruit, Lavender, Licorice, Sandalwood, Amber, Patchouli, Haitian Vetiver",
+            stock: true
+  },
+  {
+            id: 20,
+            name: "Dior - Tobacolor",
+            brand: "Dior",
+            category: "niche",
+            price: 280,
+            image: "assets/tobacolor.jpg",
+            description: "A powerful tobacco fragrance with honey and plum.",
+            notes: "Tobacco, Honey, Smoke, Plum, Peach, Amber, Oriental Notes",
+            stock: true
+  },
+  {
+            id: 21,
+            name: "Chanel - Bleu de Chanel Parfum",
+            brand: "Chanel",
+            category: "designer",
+            price: 180,
+            image: "assets/bleu-de-chanel.jpg",
+            description: "A timeless and elegant woody aromatic fragrance.",
+            notes: "Lemon Zest, Bergamot, Mint, Artemisia, Lavender, Pineapple, Geranium, Green Notes, Sandalwood, Cedar, Amberwood, Iso E Super, Tonka Bean",
+            stock: true
+  },
+  {
+            id: 22,
+            name: "Chanel - Coromandel",
+            brand: "Chanel",
+            category: "niche",
+            price: 280,
+            image: "assets/coromandel.jpg",
+            description: "A rich and exotic oriental fragrance with patchouli and benzoin.",
+            notes: "Bitter Orange, Neroli, Citruses, Patchouli, Orris Root, Rose, Jasmine, White Chocolate, Benzoin, Amber, Frankincense, Vanilla, Musk, Woods",
+            stock: true
+  },
+  {
+            id: 23,
+            name: "Tom Ford - Tobacco Vanille",
+            brand: "Tom Ford",
+            category: "niche",
+            price: 280,
+            image: "assets/tobacco-vanille.jpg",
+            description: "An opulent and warm fragrance with tobacco leaf and vanilla.",
+            notes: "Tobacco Leaf, Spicy Notes, Vanilla, Cacao, Tonka Bean, Tobacco Blossom, Dried Fruits, Woody Notes",
+            stock: true
+  },
+  {
+            id: 24,
+            name: "Tom Ford - Lost Cherry",
+            brand: "Tom Ford",
+            category: "niche",
+            price: 320,
+            image: "assets/lost-cherry.jpg",
+            description: "A luscious and full-bodied fragrance with black cherry and almond.",
+            notes: "Sour Cherry, Bitter Almond, Liquor, Plum, Turkish Rose, Jasmine Sambac, Tonka Bean, Vanilla, Peru Balsam, Benzoin, Cinnamon, Sandalwood, Cedar, Cloves, Vetiver, Patchouli",
+            stock: true
+  },
+  {
+            id: 25,
+            name: "Tom Ford - Ombre Leather",
+            brand: "Tom Ford",
+            category: "designer",
+            price: 180,
+            image: "assets/ombre-leather.jpg",
+            description: "A vast and untethered leather fragrance with jasmine and patchouli.",
+            notes: "Cardamom, Jasmine Sambac, Leather, Patchouli, Amber, Moss",
+            stock: true
+  },
+  {
+            id: 26,
+            name: "Jean Paul Gaultier - Le Male Elixir",
+            brand: "Jean Paul Gaultier",
+            category: "designer",
+            price: 180,
+            image: "assets/le-male-elixir.jpg",
+            description: "A burning and seductive fragrance with lavender and tonka bean.",
+            notes: "Lavender, Mint, Vanilla, Benzoin, Honey, Tonka Bean, Tobacco",
+            stock: true
+  },
+  {
+            id: 27,
+            name: "YSL - Myslf",
+            brand: "YSL",
+            category: "designer",
+            price: 180,
+            image: "assets/myslf.jpg",
+            description: "A modern and expressive floral woody fragrance.",
+            notes: "Calabrian Bergamot, Bergamot, Tunisian Orange Blossom, Ambrofix, Patchouli",
+            stock: true
+  },
+  {
+            id: 28,
+            name: "YSL - Tuxedo",
+            brand: "YSL",
+            category: "niche",
+            price: 280,
+            image: "assets/tuxedo.jpg",
+            description: "An elegant and sophisticated patchouli and black pepper blend.",
+            notes: "Violet Leaf, Bergamot, Coriander, Rose, Black Pepper, Lily-of-the-Valley, Ambergris, Patchouli, Bourbon Vanilla",
+            stock: true
+  },
+  {
+            id: 29,
+            name: "Giorgio Armani - Stronger With You Intensely",
+            brand: "Armani",
+            category: "designer",
+            price: 150,
+            image: "assets/stronger-with-you-intensely.jpg",
+            description: "A warm and spicy oriental woody fragrance.",
+            notes: "Pink Pepper, Juniper, Violet, Toffee, Cinnamon, Lavender, Sage, Vanilla, Tonka Bean, Amber, Suede",
+            stock: true
+  },
+  {
+            id: 30,
+            name: "Giorgio Armani - Acqua di Gio Profondo",
+            brand: "Armani",
+            category: "designer",
+            price: 150,
+            image: "assets/acqua-di-gio-profondo.jpg",
+            description: "A deep and aquatic fragrance with sea notes and minerals.",
+            notes: "Sea Notes, Aquozone, Bergamot, Green Mandarin, Rosemary, Lavender, Cypress, Mastic or Lentisque, Mineral Notes, Musk, Patchouli, Amber",
+            stock: true
+  },
+  {
+            id: 31,
+            name: "Prada - Luna Rossa Ocean",
+            brand: "Prada",
+            category: "designer",
+            price: 150,
+            image: "assets/luna-rossa-ocean.jpg",
+            description: "A modern and sophisticated fougere fragrance with iris.",
+            notes: "Bergamot, Pink Pepper, Artemisia, Lavender, Iris, Sage, Suede, Saffron, Musk, Haitian Vetiver, Patchouli, Caramel",
+            stock: true
+  },
+  {
+            id: 32,
+            name: "Valentino - Uomo Born In Roma",
+            brand: "Valentino",
+            category: "designer",
+            price: 150,
+            image: "assets/born-in-roma.jpg",
+            description: "A modern aromatic woody fragrance with a cool edge.",
+            notes: "Mineral Notes, Salt, Violet Leaf, Sage, Ginger, Vetiver, Woody Notes",
+            stock: true
+  },
+  {
+            id: 33,
+            name: "Viktor&Rolf - Spicebomb Extreme",
+            brand: "Viktor&Rolf",
+            category: "designer",
+            price: 180,
+            image: "assets/spicebomb-extreme.jpg",
+            description: "An explosive and intense spicy fragrance with tobacco and vanilla.",
+            notes: "Black Pepper, Cumin, Tobacco, Vanilla, Lavender",
+            stock: true
+  },
+  {
+            id: 34,
+            name: "Azzaro - The Most Wanted Parfum",
+            brand: "Azzaro",
+            category: "designer",
+            price: 150,
+            image: "assets/the-most-wanted.jpg",
+            description: "A powerful and charismatic fragrance with ginger and vanilla.",
+            notes: "Ginger, Woodsy Notes, Bourbon Vanilla",
+            stock: true
+  },
+  {
+            id: 35,
+            name: "Carolina Herrera - Bad Boy Cobalt",
+            brand: "Carolina Herrera",
+            category: "designer",
+            price: 150,
+            image: "assets/bad-boy-cobalt.jpg",
+            description: "A bold and energizing fragrance with pink pepper and lavender.",
+            notes: "Pink Pepper, Lavender, Plum, Geranium, Truffle, Vetiver, Cedar, Oak",
+            stock: true
+  },
+  {
+            id: 36,
+            name: "Dolce & Gabbana - The One Luminous Night",
+            brand: "D&G",
+            category: "niche",
+            price: 250,
+            image: "assets/the-one-luminous-night.jpg",
+            description: "A mysterious and enchanting fragrance with dates and incense.",
+            notes: "Black Pepper, Bergamot, Basil, Dates, Geranium, Sage, Amber, Incense, Sandalwood",
+            stock: true
+  },
+  {
+            id: 37,
+            name: "Xerjoff - Casamorati Mefisto",
+            brand: "Xerjoff",
+            category: "niche",
+            price: 250,
+            image: "assets/mefisto.jpg",
+            description: "A fresh and classic Italian citrus fragrance.",
+            notes: "Grapefruit, Bergamot, Amalfi Lemon, Lavender, Iris, Rose, Musk, Sandalwood, Virginia Cedar, Amber",
+            stock: true
+  },
+  {
+            id: 38,
+            name: "Xerjoff - Casamorati Lira",
+            brand: "Xerjoff",
+            category: "niche",
+            price: 250,
+            image: "assets/lira.jpg",
+            description: "A delicious and sophisticated gourmand with caramel and vanilla.",
+            notes: "Blood Orange, Bergamot, Lavender, Cinnamon, Licorice, Jasmine, Caramel, Vanilla, Musk",
+            stock: true
+  },
+  {
+            id: 39,
+            name: "Xerjoff - Casamorati Bouquet Ideale",
+            brand: "Xerjoff",
+            category: "niche",
+            price: 250,
+            image: "assets/bouquet-ideale.jpg",
+            description: "A warm and spicy oriental fragrance with vanilla and papyrus.",
+            notes: "Cinnamon, Nutmeg, Guaiac Wood, Sandalwood, Cedar, Papyrus, Vanilla, Coumarin, Tobacco Blossom, French Labdanum, Musk",
+            stock: true
+  },
+  {
+            id: 40,
+            name: "Creed - Silver Mountain Water",
+            brand: "Creed",
+            category: "niche",
+            price: 280,
+            image: "assets/silver-mountain-water.jpg",
+            description: "A fresh and icy fragrance inspired by the Swiss Alps.",
+            notes: "Bergamot, Mandarin Orange, Green Tea, Black Currant, Musk, Petitgrain, Sandalwood, Galbanum",
+            stock: true
+  },
+  {
+            id: 41,
+            name: "Creed - Green Irish Tweed",
+            brand: "Creed",
+            category: "niche",
+            price: 250,
+            image: "assets/green-irish-tweed.jpg",
+            description: "A classic and elegant green fragrance, fresh and sophisticated.",
+            notes: "Lemon Verbena, Iris, Violet Leaf, Ambergris, Mysore Sandalwood",
+            stock: true
+  },
+  {
+            id: 42,
+            name: "Louis Vuitton - Afternoon Swim",
+            brand: "Louis Vuitton",
+            category: "niche",
+            price: 280,
+            image: "assets/afternoon-swim.jpg",
+            description: "A vibrant and energetic citrus fragrance, like a dip in the ocean.",
+            notes: "Sicilian Orange, Bergamot, Mandarin Orange",
+            stock: true
+  },
+  {
+            id: 43,
+            name: "Louis Vuitton - On the Beach",
+            brand: "Louis Vuitton",
+            category: "niche",
+            price: 280,
+            image: "assets/on-the-beach.jpg",
+            description: "A sunny and refreshing fragrance with yuzu and neroli.",
+            notes: "Yuzu, Neroli, Pink Pepper, Rosemary, Sand, Thyme, Cloves, Cypress",
+            stock: true
+  },
+  {
+            id: 44,
+            name: "Parfums de Marly - Delina",
+            brand: "Parfums de Marly",
+            category: "niche",
+            price: 280,
+            image: "assets/delina.jpg",
+            description: "A beautiful and feminine floral fragrance with rhubarb and rose.",
+            notes: "Rhubarb, Lychee, Bergamot, Nutmeg, Turkish Rose, Peony, Petalia, Vanilla, Musk, Cashmeran, Haitian Vetiver, Cedar, Incense",
+            stock: true
+  },
+  {
+            id: 45,
+            name: "Parfums de Marly - Herod",
+            brand: "Parfums de Marly",
+            category: "niche",
+            price: 250,
+            image: "assets/herod.jpg",
+            description: "A warm and woody tobacco fragrance with vanilla and cinnamon.",
+            notes: "Cinnamon, Pepper, Tobacco Leaf, Incense, Osmanthus, Labdanum, Vanilla, Iso E Super, Cedar, Musk, Cypriol Oil or Nagarmotha, Vetiver",
+            stock: true
+  },
+  {
+            id: 46,
+            name: "Parfums de Marly - Pegasus",
+            brand: "Parfums de Marly",
+            category: "niche",
+            price: 250,
+            image: "assets/pegasus.jpg",
+            description: "A classic and refined oriental fougere with almond and vanilla.",
+            notes: "Heliotrope, Cumin, Bergamot, Bitter Almond, Lavender, Jasmine, Vanilla, Sandalwood, Amber",
+            stock: true
+  },
+  {
+            id: 47,
+            name: "Parfums de Marly - Oajan",
+            brand: "Parfums de Marly",
+            category: "niche",
+            price: 280,
+            image: "assets/oajan.jpg",
+            description: "A rich and delicious gourmand with honey and cinnamon.",
+            notes: "Cinnamon, Honey, Osmanthus, Benzoin, Labdanum, Amber, Artemisia, Patchouli, Musk, Vanilla, Tonka Bean",
+            stock: true
+  },
+  {
+            id: 48,
+            name: "Initio - Rehab",
+            brand: "Initio",
+            category: "niche",
+            price: 250,
+            image: "assets/rehab.jpg",
+            description: "A smooth and comforting woody aromatic fragrance.",
+            notes: "Lavender, Bergamot, Vetiver, Cedar, Patchouli, Sandalwood, Musk, Guaiac Wood",
+            stock: true
+  },
+  {
+            id: 49,
+            name: "Initio - Atomic Rose",
+            brand: "Initio",
+            category: "niche",
+            price: 280,
+            image: "assets/atomic-rose.jpg",
+            description: "A powerful and explosive rose fragrance with bergamot and jasmine.",
+            notes: "Italian Bergamot, Pink Pepper, Hedione, Bulgarian Rose, Turkish Rose, Egyptian Jasmine, Madagascar Vanilla, Amber",
+            stock: true
+  },
+  {
+            id: 50,
+            name: "Amouage - Guidance",
+            brand: "Amouage",
+            category: "niche",
+            price: 320,
+            image: "assets/guidance.jpg",
+            description: "A unique and addictive floral gourmand with hazelnut and incense.",
+            notes: "Pear, Hazelnut, Olibanum, Osmanthus, Rose, Saffron, Jasmine Sambac, Sandalwood, Vanilla, Akigalawood, Ambergris, Labdanum",
+            stock: true
+  },
+  {
+            id: 51,
+            name: "Amouage - Jubilation XXV",
+            brand: "Amouage",
+            category: "niche",
+            price: 280,
+            image: "assets/jubilation-xxv.jpg",
+            description: "A regal and opulent fragrance with blackberry, incense and oud.",
+            notes: "Blackberry, Olibanum, Orange, Labdanum, Coriander, Tarragon, Honey, Guaiac Wood, Cinnamon, Bay Leaf, Clove, Rose, Oud, Myrrh, Patchouli, Ambergris, Musk, Immortelle, Cedar, Oakmoss",
+            stock: true
+  },
+  {
+            id: 52,
+            name: "Byredo - Mojave Ghost",
+            brand: "Byredo",
+            category: "niche",
+            price: 220,
+            image: "assets/mojave-ghost.jpg",
+            description: "A woody and ethereal fragrance inspired by the Mojave desert.",
+            notes: "Sapodilla, Ambrette (Musk Mallow), Magnolia, Violet, Sandalwood, Ambergris, Cedar",
+            stock: true
+  },
+  {
+            id: 53,
+            name: "Byredo - Rose of No Man's Land",
+            brand: "Byredo",
+            category: "niche",
+            price: 220,
+            image: "assets/rose-of-no-mans-land.jpg",
+            description: "A sophisticated and clean rose fragrance with pink pepper.",
+            notes: "Pink Pepper, Turkey Red Rose, Raspberry Blossom, Papyrus, Amber",
+            stock: true
+  },
+  {
+            id: 54,
+            name: "Kilian - Good Girl Gone Bad",
+            brand: "Kilian",
+            category: "niche",
+            price: 280,
+            image: "assets/good-girl-gone-bad.jpg",
+            description: "A luscious and floral fragrance with osmanthus and jasmine.",
+            notes: "Osmanthus, Jasmine, May Rose, Indian Tuberose, Narcissus, Amber, Cedar",
+            stock: true
+  },
+  {
+            id: 55,
+            name: "Kilian - Love Don't Be Shy",
+            brand: "Kilian",
+            category: "niche",
+            price: 320,
+            image: "assets/love-dont-be-shy.jpg",
+            description: "A sweet and addictive marshmallow and orange blossom scent.",
+            notes: "Neroli, Bergamot, Pink Pepper, Coriander, Orange Blossom, Honeysuckle, Jasmine, Iris, Rose, Sugar, Vanilla, Caramel, Musk, Civet, Labdanum",
+            stock: true
+  },
+  {
+            id: 56,
+            name: "Dior - Gris Dior",
+            brand: "Dior",
+            category: "niche",
+            price: 280,
+            image: "assets/gris-dior.jpg",
+            description: "An elegant and sophisticated chypre floral fragrance.",
+            notes: "Bergamot, Rose, Patchouli, Amber, Cedar, Sandalwood, Oakmoss",
+            stock: true
+  },
+  {
+            id: 57,
+            name: "Dior - Bois d'Argent",
+            brand: "Dior",
+            category: "niche",
+            price: 280,
+            image: "assets/bois-dargent.jpg",
+            description: "A mysterious and comforting iris-centric fragrance.",
+            notes: "Juniper Berries, Cypress, Iris, Myrrh, Patchouli, Vanilla, Musk, Resins, Amber, Woody Notes, Honey, Leather",
+            stock: true
+  },
+  {
+            id: 58,
+            name: "Chanel - Sycomore",
+            brand: "Chanel",
+            category: "niche",
+            price: 350,
+            image: "assets/sycomore.jpg",
+            description: "A powerful and noble vetiver fragrance with a touch of smoke.",
+            notes: "Vetiver, Sandalwood, Aldehydes, Tobacco, Violet, Juniper, Pink Pepper, Cypress, Spices",
+            stock: true
+  },
+  {
+            id: 59,
+            name: "Chanel - Le Lion",
+            brand: "Chanel",
+            category: "niche",
+            price: 280,
+            image: "assets/le-lion.jpg",
+            description: "A powerful and majestic oriental fragrance with labdanum and patchouli.",
+            notes: "Lemon, Bergamot, Labdanum, Amber, Patchouli, Madagascar Vanilla, Sandalwood, Musk",
+            stock: true
+  },
+  {
+            id: 60,
+            name: "Louis Vuitton - Meteore",
+            brand: "Louis Vuitton",
+            category: "niche",
+            price: 280,
+            image: "assets/meteore.jpg",
+            description: "A fresh and crystalline citrus fragrance with a spicy heart.",
+            notes: "Calabrian Bergamot, Sicilian Orange, Mandarin Orange, Tunisian Neroli, Guatemalan Cardamom, Indonesian Nutmeg, Pink Pepper, Java Vetiver Oil",
+            stock: true
+  },
+  {
+            id: 61,
+            name: "Louis Vuitton - Rose des Vents",
+            brand: "Louis Vuitton",
+            category: "niche",
+            price: 280,
+            image: "assets/rose-des-vents.jpg",
+            description: "A beautiful and airy rose fragrance with iris and cedar.",
+            notes: "Peach, Green Notes, Black Currant, May Rose, Rose, Turkish Rose, Iris, White Musk, Cedar, Pepper, Orris Root, Violet Leaf",
+            stock: true
+  }
   ];
 
-  let activeFilter = 'all';
-
-  function handleSortChange(value) {
-  currentSort = value;
-  renderProductGrid(activeFilter);
-  }
-
-  function renderProductGrid(filter) {
-  const grid = document.getElementById('product-grid');
-  if (!grid) return;
-  grid.innerHTML = '';
-
-  let items = filter === 'all' ? products : products.filter(p => p.type === filter);
-
-  if (currentSort === 'name') {
-  items.sort((a, b) => a.name.localeCompare(b.name));
-  } else if (currentSort === 'price-asc') {
-  items.sort((a, b) => a.price - b.price);
-  } else if (currentSort === 'price-desc') {
-  items.sort((a, b) => b.price - a.price);
-  } else if (currentSort === 'brand') {
-  items.sort((a, b) => a.brand.localeCompare(b.brand));
-  } else if (currentSort === 'sells') {
-  items.sort((a, b) => (b.sells || 0) - (a.sells || 0));
-  }
-
-  items.forEach(product => {
-  const card = document.createElement('div');
-  card.className = 'product-card';
-  card.setAttribute('data-product-id', product.id);
-
-  const clickAttr = product.secondaryImage ? `onclick="swapProductImage(${product.id}, this)" style="cursor: pointer;"` : '';
-
-  card.innerHTML = `
-  <div class="product-image" ${clickAttr}>
-  <img src="${product.image}" alt="${product.name}">
-  ${product.secondaryImage ? '<div class="image-hint">Click to flip</div>' : ''}
-  </div>
-  <div class="product-info">
-  <div class="product-brand">${product.brand}</div>
-  <h3 class="product-name">${product.name}</h3>
-  <div class="product-pricing">
-  <span class="original-price">${product.originalPrice} DH</span>
-  <span class="product-price">${product.price} <span class="currency">DH</span></span>
-  </div>
-  <p style="font-size: 0.7rem; opacity: 0.5; margin-top: 10px;">${product.notes}</p>
-  <button class="add-to-cart" onclick="addToCart(${product.id})">Add to Collection</button>
-  </div>
-  `;
-  grid.appendChild(card);
-  });
-
-  ScrollTrigger.refresh();
-  }
-
-  let currentSort = 'default';
-  function initProductGrid(filter = 'all') {
-  renderProductGrid(filter);
-  }
-
-  function setFilter(filter) {
-  activeFilter = filter;
-
-  const collectionsView = document.getElementById('collections-view');
-  const productsView = document.getElementById('products-section');
-
-  if (filter === 'back') {
-  collectionsView.style.display = 'block';
-  productsView.style.display = 'none';
-  gsap.from('#collections-view', { opacity: 0, y: 50, duration: 0.8 });
-  } else {
-  collectionsView.style.display = 'none';
-  productsView.style.display = 'block';
-  initProductGrid(filter);
-
-  let title = 'Collection';
-  if (filter === 'niche') title = 'Exclusive Niche';
-  else if (filter === 'designer') title = 'Designer Collection';
-  else if (filter === 'pack') title = 'Luxury Sets & Packs';
-  else if (filter === 'all') title = 'Full Collection';
-
-  document.getElementById('collection-title').innerText = title;
-
-  gsap.from('#products-section', { opacity: 0, y: 50, duration: 0.8 });
-  }
-  }
-
-  function initMarquee() {
-  const marqueeInner = document.getElementById('marquee-content');
-  if (!marqueeInner) return;
-
-  // Featured products for marquee
-  const featured = products.filter(p => [1, 2, 3, 9, 11, 22, 23, 27, 42, 47, 52].includes(p.id));
-
-  // Double items for seamless loop
-  const items = [...featured, ...featured];
-
-  marqueeInner.innerHTML = items.map(p => `
-  <div class="marquee-item" onclick="showProduct(${p.id})">
-  <img src="${p.image}" alt="${p.name}">
-  <div class="m-info">
-  <div class="m-name">${p.name}</div>
-  <div class="m-price">${p.price} DH</div>
-  <button class="marquee-add-btn" onclick="event.stopPropagation(); addToCart(${p.id})">Add to Collection</button>
-  </div>
-  </div>
-  `).join('');
-
-  // Pause on Touch (Mobile)
-  marqueeInner.addEventListener('touchstart', () => marqueeInner.classList.add('paused'));
-  marqueeInner.addEventListener('touchend', () => marqueeInner.classList.remove('paused'));
-  }
-
-  function showProduct(id) {
-  const product = products.find(p => p.id === id);
-  if (!product) return;
-
-  // 1. Switch to the correct collection view
-  setFilter(product.type || 'all');
-
-  // 2. Wait for DOM to render and scroll
-  setTimeout(() => {
-  const card = document.querySelector(`.product-card[data-product-id="${id}"]`);
-  if (card) {
-  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-  // 3. Add highlight effect
-  card.classList.add('highlight-product');
-  setTimeout(() => card.classList.remove('highlight-product'), 3000);
-  }
-  }, 100);
-  }
-
-  // 7. Search Logic
-  function toggleSearch() {
-  const overlay = document.getElementById('search-overlay');
-  const isVisible = overlay.style.display === 'flex';
-  overlay.style.display = isVisible ? 'none' : 'flex';
-  if (!isVisible) {
-  document.getElementById('search-input').focus();
-  gsap.from('#search-input', { y: 20, opacity: 0, duration: 0.5 });
-  }
-  }
-
-  function handleSearch(query) {
-  const resultsContainer = document.getElementById('search-results');
-  if (!query) {
-  resultsContainer.innerHTML = '';
-  return;
-  }
-
-  const matches = products.filter(p => 
-  p.name.toLowerCase().includes(query.toLowerCase()) || 
-  p.brand.toLowerCase().includes(query.toLowerCase())
-  ).slice(0, 8);
-
-  resultsContainer.innerHTML = matches.map(p => {
-  const clickAttr = p.secondaryImage ? `onclick="event.stopPropagation(); swapProductImage(${p.id}, this.querySelector('.s-img-container'))"` : '';
-  return `
-  <div class="search-result-item" onclick="selectSearchResult(${p.id})">
-  <div class="s-img-container" ${p.secondaryImage ? 'style="cursor: pointer;"' : ''}>
-  <img src="${p.image}" alt="${p.name}">
-  </div>
-  <div>
-  <div style="font-weight: 700;">${p.name}</div>
-  <div style="font-size: 0.8rem; opacity: 0.6;">${p.brand} | ${p.price} DH</div>
-  ${p.secondaryImage ? '<div style="font-size: 0.6rem; color: var(--primary-color);">Click image to flip</div>' : ''}
-  </div>
-  </div>
-  `;
-  }).join('');
-  }
-
-  function selectSearchResult(id) {
-  toggleSearch();
-  showProduct(id);
-  }
-
-  // 5. Scroll Animations
-  function initScrollAnimations() {
-  gsap.registerPlugin(ScrollTrigger);
-
-  gsap.from('.section-header', {
-  scrollTrigger: {
-  trigger: '.products',
-  start: 'top 80%',
+// Pack Data
+const packs = [
+  {
+            id: "p1",
+            name: "Discovery Pack - Niche",
+            price: 650,
+            items: ["Erba Pura", "Aventus", "Imagination"],
+            image: "assets/pack-niche.jpg",
+            category: "pack"
   },
-  y: 50,
-  opacity: 0,
-  duration: 1,
-  ease: 'power3.out'
-  });
-
-  gsap.from('.product-card', {
-  scrollTrigger: {
-  trigger: '.product-grid',
-  start: 'top 80%',
-  },
-  y: 100,
-  opacity: 0,
-  stagger: 0.1,
-  duration: 1.2,
-  ease: 'power4.out'
-  });
+  {
+            id: "p2",
+            name: "Discovery Pack - Designer",
+            price: 450,
+            items: ["Bleu de Chanel", "Sauvage Elixir", "Myslf"],
+            image: "assets/pack-designer.jpg",
+            category: "pack"
   }
+  ];
 
-  // 6. Cart Logic
-  function addToCart(id) {
-  const product = products.find(p => p.id === id);
-  if (!product) return;
+// State Management
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
+let activeCollection = 'all';
 
-  const existing = cart.find(item => item.id === id);
-  if (existing) {
-  existing.quantity += 1;
-  } else {
-  cart.push({ ...product, quantity: 1 });
-  }
+// Initialize Cart Count
+function updateCartCount() {
+      const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+      const cartCountElements = document.querySelectorAll('.cart-count');
+      cartCountElements.forEach(el => {
+                el.textContent = totalCount;
+                el.classList.toggle('hidden', totalCount === 0);
+      });
+}
 
-  updateCartUI();
-  openCart();
+// Collection Filter Logic
+function filterCollections(category) {
+      activeCollection = category;
 
-  // Feedback animation
-  gsap.from('.cart-btn', { scale: 1.5, duration: 0.3, ease: 'back.out(2)' });
-  }
+    // Update UI active state
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+              btn.classList.toggle('active', btn.getAttribute('onclick').includes(category));
+    });
 
-  function updateCartUI() {
-  const list = document.getElementById('cart-items-list');
-  const totalEl = document.getElementById('cart-total-amount');
-  const countEl = document.getElementById('cart-count');
+    const productsGrid = document.getElementById('products-grid');
+      if (!productsGrid) return;
 
-  if (!list) return;
+    productsGrid.innerHTML = '';
 
-  if (cart.length === 0) {
-  list.innerHTML = '<p class="empty-cart-msg">Your collection is empty.</p>';
-  totalEl.innerText = '0 DH';
-  countEl.innerText = '0';
-  return;
-  }
+    const filteredProducts = category === 'all' 
+        ? products 
+              : products.filter(p => p.category === category);
 
-  let subtotal = 0;
-  list.innerHTML = cart.map(item => {
-  subtotal += item.price * item.quantity;
-  return `
-  <div class="cart-item">
-  <img src="${item.image}" alt="${item.name}">
-  <div class="cart-item-info">
-  <div class="cart-item-name">${item.name}</div>
-  <div class="cart-item-price">${item.price} DH</div>
-  <div class="cart-item-controls">
-  <button class="qty-btn" onclick="changeQty(${item.id}, -1)">-</button>
-  <span>${item.quantity}</span>
-  <button class="qty-btn" onclick="changeQty(${item.id}, 1)">+</button>
-  <button class="remove-item" onclick="removeFromCart(${item.id})">Remove</button>
-  </div>
-  </div>
-  </div>
-  `;
-  }).join('');
+    filteredProducts.forEach(product => {
+              const card = createProductCard(product);
+              productsGrid.appendChild(card);
+    });
 
-  const finalTotal = subtotal - (subtotal * discount);
-  totalEl.innerText = `${Math.round(finalTotal)} DH ${discount > 0 ? '(Discount Applied)' : ''}`;
-  countEl.innerText = cart.reduce((acc, item) => acc + item.quantity, 0);
-  }
+    // Update Section Title
+    const titleElement = document.getElementById('collection-title');
+      if (titleElement) {
+                const titleKey = `coll.${category}.title`;
+                titleElement.setAttribute('data-i18n', titleKey);
+                titleElement.textContent = translations[currentLanguage][titleKey] || 'Our Collection';
+      }
 
-  function applyCoupon() {
-  const code = document.getElementById('coupon-input').value.trim().toUpperCase();
-  if (code === 'WELCOME10') {
-  discount = 0.10;
-  alert('Coupon Applied! 10% Discount added.');
-  updateCartUI();
-  } else {
-  alert('Invalid Coupon Code');
-  }
-  }
+    // Scroll to products
+    document.getElementById('products-section')?.scrollIntoView({ behavior: 'smooth' });
+}
 
-  function showCheckout() {
-  if (cart.length === 0) return;
-  document.getElementById('checkout-form').style.display = 'block';
-  document.getElementById('checkout-btn').style.display = 'none';
-  document.getElementById('cart-items-list').style.display = 'none';
-  document.getElementById('coupon-section').style.display = 'none';
-  }
+// Create Product Card
+function createProductCard(product) {
+      const div = document.createElement('div');
+      div.className = 'product-card reveal';
+      div.innerHTML = `
+              <div class="product-image">
+                          <img src="${product.image}" alt="${product.name}" loading="lazy">
+                                      ${!product.stock ? '<span class="out-of-stock">Out of Stock</span>' : ''}
+                                                  <button class="quick-view-btn" onclick="openQuickView(${product.id})">
+                                                                  <i class="fas fa-eye"></i>
+                                                                              </button>
+                                                                                      </div>
+                                                                                              <div class="product-info">
+                                                                                                          <span class="brand-tag">${product.brand}</span>
+                                                                                                                      <h3>${product.name}</h3>
+                                                                                                                                  <p class="price">${product.price} DH <span class="size">/ 10ml</span></p>
+                                                                                                                                              <button class="add-to-cart-btn" onclick="addToCart(${product.id})" ${!product.stock ? 'disabled' : ''}>
+                                                                                                                                                              <i class="fas fa-shopping-bag"></i>
+                                                                                                                                                                              <span data-i18n="coll.all.btn">Add to Collection</span>
+                                                                                                                                                                                          </button>
+                                                                                                                                                                                                  </div>
+                                                                                                                                                                                                      `;
+      return div;
+}
 
-  function submitOrder() {
-  const fname = document.getElementById('order-fname').value;
-  const lname = document.getElementById('order-lname').value;
-  const city = document.getElementById('order-city').value;
-  const address = document.getElementById('order-address').value;
-  const phone = document.getElementById('order-phone').valconst address = document.getElementById('order-address').value;
-  const phone = document.getElementById('order-phone').value;
+// Add to Cart
+function addToCart(productId, isPack = false) {
+      const item = isPack 
+        ? packs.find(p => p.id === productId)
+                : products.find(p => p.id === productId);
 
-  if (!fname || !lname || !city || !address || !phone) {
-  alert('Please fill in all details.');
-  return;
-  }
+    if (!item) return;
 
-  const orderData = {
-  customer: `${fname} ${lname}`,
-  city: city,
-  address: address,
-  phone: phone,
-  items: cart,
-  total: document.getElementById('cart-total-amount').innerText,
-  status: 'pending',
-  timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-  source: window.location.hostname
-  };
+    const existingItem = cart.find(i => i.id === productId && i.isPack === isPack);
 
-  // 1. Save to Firebase
-  if (window.db) {
-  window.db.collection('orders').add(orderData)
-  .then(() => {
-  console.log("Order saved to database");
-  // Increment sells for products
-  cart.forEach(item => {
-  const product = products.find(p => p.id === item.id);
-  if (product) product.sells = (product.sells || 0) + item.quantity;
-  });
-  })
-  .catch(error => console.error("Error saving order:", error));
-  }
+    if (existingItem) {
+              existingItem.quantity += 1;
+    } else {
+              cart.push({
+                            ...item,
+                            quantity: 1,
+                            isPack: isPack
+              });
+    }
 
-  // 2. WhatsApp Notification
-  let itemsText = cart.map(item => `- ${item.name} x${item.quantity} (${item.price} DH)`).join('%0A');
-  let totalText = document.getElementById('cart-total-amount').innerText;
+    localStorage.setItem('cart', JSON.stringify(cart));
+      updateCartCount();
+      showToast(`${item.name} added to collection!`);
+}
 
-  const message = `*NEW ORDER - URPERFUME*%0A%0A*Customer:* ${fname} ${lname}%0A*Phone:* ${phone}%0A*City:* ${city}%0A*Address:* ${address}%0A%0A*Items:*%0A${itemsText}%0A%0A*Total:* ${totalText}%0A%0A_Verification call pending (FR/AR)_`;
+// UI Management
+function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      document.body.appendChild(toast);
 
-  const waUrl = `https://wa.me/212752214437?text=${message}`;
-  window.open(waUrl, '_blank');
+    setTimeout(() => {
+              toast.classList.add('show');
+              setTimeout(() => {
+                            toast.classList.remove('show');
+                            setTimeout(() => toast.remove(), 300);
+              }, 3000);
+    }, 100);
+}
 
-  // Clear cart after order
-  cart = [];
-  discount = 0;
-  updateCartUI();
-  closeCart();
+// Quick View Modal
+function openQuickView(productId) {
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
 
-  // Reset form
-  document.getElementById('checkout-form').style.display = 'none';
-  document.getElementById('checkout-btn').style.display = 'block';
-  document.getElementById('cart-items-list').style.display = 'block';
-  document.getElementById('coupon-section').style.display = 'flex';
-  }
+    const modal = document.getElementById('quick-view-modal');
+      const content = document.getElementById('modal-content');
+      if (!modal || !content) return;
 
-  function changeQty(id, delta) {
-  const item = cart.find(i => i.id === id);
-  if (!item) return;
+    content.innerHTML = `
+            <div class="modal-grid">
+                        <div class="modal-image">
+                                        <img src="${product.image}" alt="${product.name}">
+                                                    </div>
+                                                                <div class="modal-details">
+                                                                                <span class="brand-tag">${product.brand}</span>
+                                                                                                <h2>${product.name}</h2>
+                                                                                                                <p class="modal-price">${product.price} DH <span class="size">/ 10ml</span></p>
+                                                                                                                                <div class="modal-desc">
+                                                                                                                                                    <p>${product.description}</p>
+                                                                                                                                                                    </div>
+                                                                                                                                                                                    <div class="modal-notes">
+                                                                                                                                                                                                        <h4>Notes:</h4>
+                                                                                                                                                                                                                            <p>${product.notes}</p>
+                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                            <div class="modal-actions">
+                                                                                                                                                                                                                                                                                <button class="add-to-cart-btn" onclick="addToCart(${product.id})" ${!product.stock ? 'disabled' : ''}>
+                                                                                                                                                                                                                                                                                                        <i class="fas fa-shopping-bag"></i>
+                                                                                                                                                                                                                                                                                                                                Add to Collection
+                                                                                                                                                                                                                                                                                                                                                    </button>
+                                                                                                                                                                                                                                                                                                                                                                        <button class="wa-inquiry-btn" onclick="sendInquiry('${product.name}')">
+                                                                                                                                                                                                                                                                                                                                                                                                <i class="fab fa-whatsapp"></i>
+                                                                                                                                                                                                                                                                                                                                                                                                                        Inquire
+                                                                                                                                                                                                                                                                                                                                                                                                                                            </button>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    `;
 
-  item.quantity += delta;
-  if (item.quantity <= 0) {
-  removeFromCart(id);
-  } else {
-  updateCartUI();
-  }
-  }
+    modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+}
 
-  function removeFromCart(id) {
-  cart = cart.filter(i => i.id !== id);
-  updateCartUI();
-  }
+function closeQuickView() {
+      const modal = document.getElementById('quick-view-modal');
+      if (modal) modal.classList.remove('active');
+      document.body.style.overflow = '';
+}
 
-  function openCart() {
-  const drawer = document.getElementById('cart-drawer');
-  const overlay = document.getElementById('cart-overlay');
-  if (!drawer || !overlay) return;
+// Cart UI Logic
+function toggleCart() {
+      const cartDrawer = document.getElementById('cart-drawer');
+      const overlay = document.getElementById('cart-overlay');
+      if (!cartDrawer || !overlay) return;
 
-  overlay.classList.add('active');
-  // Use gsap.to for absolute control and clear any previous conflicting transforms
-  gsap.to(drawer, { right: 0, x: 0, duration: 0.6, ease: 'expo.out' });
-  }
+    const isActive = cartDrawer.classList.contains('active');
+      if (!isActive) renderCart();
 
-  function closeCart() {
-  const drawer = document.getElementById('cart-drawer');
-  const overlay = document.getElementById('cart-overlay');
-  if (!drawer || !overlay) return;
+    cartDrawer.classList.toggle('active');
+      overlay.classList.toggle('active');
+      document.body.style.overflow = isActive ? '' : 'hidden';
+}
 
-  overlay.classList.remove('active');
-  // Slide back out to the right
-  const width = window.innerWidth <= 768 ? '100%' : '450px';
-  gsap.to(drawer, { right: `-${width}`, duration: 0.5, ease: 'power2.in' });
-  }
+function renderCart() {
+      const cartItems = document.getElementById('cart-items');
+      const cartTotal = document.getElementById('cart-total');
+      if (!cartItems || !cartTotal) return;
 
-  // 8. Theme Toggle
-  function toggleTheme() {
-  const body = document.body;
-  body.classList.toggle('light-mode');
-  const isLight = body.classList.contains('light-mode');
-  localStorage.setItem('urperfume-theme', isLight ? 'light' : 'dark');
+    cartItems.innerHTML = '';
+      let total = 0;
 
-  // Animate icon rotation
-  gsap.to('.theme-toggle svg', { rotate: isLight ? 180 : 0, duration: 0.5, ease: 'back.out' });
-  }
+    cart.forEach(item => {
+              const itemTotal = item.price * item.quantity;
+              total += itemTotal;
 
-  // Check saved theme
-  if (localStorage.getItem('urperfume-theme') === 'light') {
-  document.body.classList.add('light-mode');
-  }
+                         const itemEl = document.createElement('div');
+              itemEl.className = 'cart-item';
+              itemEl.innerHTML = `
+                          <div class="cart-item-image">
+                                          <img src="${item.image}" alt="${item.name}">
+                                                      </div>
+                                                                  <div class="cart-item-details">
+                                                                                  <h4>${item.name}</h4>
+                                                                                                  <p class="cart-item-price">${item.price} DH</p>
+                                                                                                                  <div class="quantity-controls">
+                                                                                                                                      <button onclick="updateQuantity(${item.id}, ${item.isPack || false}, -1)">-</button>
+                                                                                                                                                          <span>${item.quantity}</span>
+                                                                                                                                                                              <button onclick="updateQuantity(${item.id}, ${item.isPack || false}, 1)">+</button>
+                                                                                                                                                                                              </div>
+                                                                                                                                                                                                          </div>
+                                                                                                                                                                                                                      <button class="remove-item" onclick="removeFromCart(${item.id}, ${item.isPack || false})">
+                                                                                                                                                                                                                                      <i class="fas fa-trash"></i>
+                                                                                                                                                                                                                                                  </button>
+                                                                                                                                                                                                                                                          `;
+              cartItems.appendChild(itemEl);
+    });
 
-  function resetView() {
-  const homeSections = ['home', 'collections-view', 'about'];
-  homeSections.forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.style.display = (id === 'home' ? 'flex' : 'block');
-  });
+    cartTotal.textContent = `${total} DH`;
+}
 
-  document.querySelector('.marquee-section').style.display = 'block';
-  document.getElementById('products-section').style.display = 'none';
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
+function updateQuantity(id, isPack, delta) {
+      const item = cart.find(i => i.id === id && i.isPack === isPack);
+      if (item) {
+                item.quantity += delta;
+                if (item.quantity <= 0) {
+                              removeFromCart(id, isPack);
+                } else {
+                              localStorage.setItem('cart', JSON.stringify(cart));
+                              renderCart();
+                              updateCartCount();
+                }
+      }
+}
 
-  function swapProductImage(productId, element) {
-  const product = products.find(p => p.id === productId);
-  if (!product || !product.secondaryImage) return;
+function removeFromCart(id, isPack) {
+      cart = cart.filter(i => !(i.id === id && i.isPack === isPack));
+      localStorage.setItem('cart', JSON.stringify(cart));
+      renderCart();
+      updateCartCount();
+}
 
-  const img = element.querySelector('img');
-  const isOriginal = img.src.includes(product.image);
-  const newSrc = isOriginal ? product.secondaryImage : product.image;
+function checkout() {
+      if (cart.length === 0) {
+                showToast('Your collection is empty!');
+                return;
+      }
 
-  // Premium Flip Animation
-  gsap.to(img, {
-  rotateY: 90,
-  opacity: 0,
-  scale: 0.8,
-  duration: 0.3,
-  ease: 'power2.in',
-  onComplete: () => {
-  img.src = newSrc;
-  gsap.fromTo(img, 
-  { rotateY: -90, opacity: 0, scale: 0.8 },
-  { rotateY: 0, opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(1.5)' }
-  );
-  }
-  });
-  }
+    const modal = document.getElementById('checkout-modal');
+      if (modal) modal.classList.add('active');
+}
 
-  // --- ADMIN PANEL LOGIC ---
-  let logoClicks = 0;
-  let lastClickTime = 0;
-  let currentAdmin = null;
+function closeCheckout() {
+      const modal = document.getElementById('checkout-modal');
+      if (modal) modal.classList.remove('active');
+}
 
-  function initAdminAccess() {
-  const logo = document.querySelector('.logo');
-  if (!logo) return;
+function confirmOrder(event) {
+      event.preventDefault();
 
-  logo.style.cursor = 'pointer';
-  logo.addEventListener('click', () => {
-  const now = Date.now();
-  if (now - lastClickTime > 2000) logoClicks = 0;
+    const name = document.getElementById('order-name').value;
+      const phone = document.getElementById('order-phone').value;
+      const city = document.getElementById('order-city').value;
 
-  logoClicks++;
-  lastClickTime = now;
+    if (!name || !phone || !city) {
+              showToast('Please fill in all fields');
+              return;
+    }
 
-  if (logoClicks === 7) {
-  logoClicks = 0;
-  openAdminLogin();
-  }
-  });
-  }
+    let message = `*UrPerfume - New Order*\n\n`;
+      message += `*Customer:* ${name}\n`;
+      message += `*Phone:* ${phone}\n`;
+      message += `*City:* ${city}\n\n`;
+      message += `*Items:*\n`;
 
-  function openAdminLogin() {
-  document.getElementById('admin-login-modal').style.display = 'flex';
-  document.getElementById('admin-password').value = '';
-  document.getElementById('login-error').style.display = 'none';
-  }
+    let total = 0;
+      cart.forEach(item => {
+                message += `- ${item.name} (${item.quantity}x) - ${item.price * item.quantity} DH\n`;
+                total += item.price * item.quantity;
+      });
 
-  function closeAdminLogin() {
-  document.getElementById('admin-login-modal').style.display = 'none';
-  }
+    message += `\n*Total:* ${total} DH`;
 
-  function attemptAdminLogin() {
-  const pass = document.getElementById('admin-password').value;
-  const error = document.getElementById('login-error');
+    const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/212620138981?text=${encodedMessage}`;
 
-  if (pass === '7C6E42c178@#') {
-  currentAdmin = { name: 'Med Boali', role: 'Boss' };
-  loginSuccess();
-  } else if (pass === '0673989454') {
-  currentAdmin = { name: 'Co-Admin', role: 'Assistant' };
-  loginSuccess();
-  } else {
-  error.style.display = 'block';
-  }
-  }
+    window.open(whatsappUrl, '_blank');
 
-  function loginSuccess() {
-  closeAdminLogin();
-  document.getElementById('admin-panel').style.display = 'flex';
-  document.getElementById('admin-role-name').innerText = currentAdmin.name;
-  document.getElementById('admin-role-label').innerText = currentAdmin.role === 'Boss' ? 'Master Admin' : 'Order Manager';
-  document.getElementById('nav-settings').style.display = currentAdmin.role === 'Boss' ? 'block' : 'none';
-  showAdminTab('orders');
-  }
+    // Clear cart after order
+    cart = [];
+      localStorage.removeItem('cart');
+      updateCartCount();
+      closeCheckout();
+      toggleCart();
+      showToast('Order sent to WhatsApp!');
+}
 
-  function logoutAdmin() {
-  document.getElementById('admin-panel').style.display = 'none';
-  currentAdmin = null;
-  }
+function sendInquiry(productName) {
+      const message = `Hello UrPerfume, I'm interested in more information about: ${productName}`;
+      const whatsappUrl = `https://wa.me/212620138981?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+}
 
-  function showAdminTab(tab) {
-  const content = document.getElementById('admin-content');
-  const title = document.getElementById('admin-tab-title');
-  document.querySelectorAll('.admin-nav-item').forEach(btn => btn.classList.remove('active'));
+// Mobile Menu
+function toggleMenu() {
+      const navLinks = document.querySelector('.nav-links');
+      const menuBtn = document.querySelector('.mobile-menu-btn i');
+      if (!navLinks || !menuBtn) return;
 
-  if (event && event.target && event.target.classList.contains('admin-nav-item')) {
-  event.target.classList.add('active');
-  }
+    navLinks.classList.toggle('active');
+      menuBtn.classList.toggle('fa-bars');
+      menuBtn.classList.toggle('fa-times');
+}
 
-  if (tab === 'orders') {
-  title.innerText = 'Orders Dashboard';
-  loadOrders();
-  } else if (tab === 'stats') {
-  title.innerText = 'Boutique Statistics';
-  loadStats();
-  } else if (tab === 'settings') {
-  title.innerText = 'Site Settings';
-  loadSettings();
-  }
-  }
+// Scroll Reveal
+function reveal() {
+      const reveals = document.querySelectorAll('.reveal');
+      reveals.forEach(el => {
+                const windowHeight = window.innerHeight;
+                const revealTop = el.getBoundingClientRect().top;
+                const revealPoint = 150;
+                if (revealTop < windowHeight - revealPoint) {
+                              el.classList.add('active');
+                }
+      });
+}
 
-  function loadOrders() {
-  const content = document.getElementById('admin-content');
-  content.innerHTML = '<div style="color:rgba(255,255,255,0.5); text-align:center; padding: 50px;">Connecting to Firestore...</div>';
+// Search Logic
+function handleSearch(query) {
+      if (!query) {
+                filterCollections(activeCollection);
+                return;
+      }
 
-  if (!window.db) {
-  content.innerHTML = '<div style="color:#ff4d4d; text-align:center; padding: 50px;">Firebase not connected. Check firebase-config.js</div>';
-  return;
-  }
+    const filtered = products.filter(p => 
+                                             p.name.toLowerCase().includes(query.toLowerCase()) ||
+              p.brand.toLowerCase().includes(query.toLowerCase())
+                                         );
 
-  window.db.collection('orders').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
-  content.innerHTML = '';
-  if (snapshot.empty) {
-  content.innerHTML = '<div style="color:rgba(255,255,255,0.3); text-align:center; padding: 50px;">No orders in database.</div>';
-  return;
-  }
+    const productsGrid = document.getElementById('products-grid');
+      if (productsGrid) {
+                productsGrid.innerHTML = '';
+                filtered.forEach(product => productsGrid.appendChild(createProductCard(product)));
+      }
+}
 
-  snapshot.forEach(doc => {
-  const order = doc.data();
-  const id = doc.id;
-  const itemsHtml = order.items.map(item => `
-  <div class="order-item-row">
-  <span>${item.name} x${item.quantity}</span>
-  <span>${item.price} DH</span>
-  </div>
-  `).join('');
+// Coupon System
+function applyCoupon() {
+      const input = document.getElementById('coupon-input');
+      if (!input) return;
 
-  const card = document.createElement('div');
-  card.className = 'order-card';
-  card.innerHTML = `
-  <div class="order-header">
-  <span class="order-id">ID: ${id.substring(0, 8)}</span>
-  <span class="order-status status-${order.status}">${order.status}</span>
-  </div>
-  <div class="order-details">
-  <div class="order-customer">
-  <h4>${order.customer}</h4>
-  <p><p>Phone: ${order.phone}</p>
-  <p>City: ${order.city}</p>
-  <p>Address: ${order.address}</p>
-  <p style="font-size: 0.7rem; opacity: 0.4; margin-top: 5px;">Source: ${order.source}</p>
-  </div>
-  <div class="order-items">
-  <h4>Order Content</h4>
-  ${itemsHtml}
-  <div class="order-item-row" style="margin-top: 15px; border-top: 2px solid rgba(212,175,55,0.2); font-weight: 700; padding-top: 10px;">
-  <span>GRAND TOTAL</span>
-  <span style="color: var(--primary-color);">${order.total}</span>
-  </div>
-  </div>
-  </div>
-  <div class="order-actions">
-  ${order.status === 'pending' ? `
-  <button class="accept-btn" onclick="updateOrderStatus('${id}', 'accepted')">ACCEPT ORDER</button>
-  <button class="refuse-btn" onclick="updateOrderStatus('${id}', 'refused')">REFUSE</button>
-  ` : ''}
-  </div>
-  `;
-  content.appendChild(card);
-  });
-  }, error => {
-  content.innerHTML = `<div style="color:#ff4d4d; text-align:center; padding: 50px;">Error: ${error.message}</div>`;
-  });
-  }
+    const code = input.value.trim().toUpperCase();
+      if (code === 'URPERFUME10') {
+                showToast('Coupon applied: 10% discount!');
+                // logic for discount could be added here
+      } else {
+                showToast('Invalid coupon code');
+      }
+}
 
-  function updateOrderStatus(id, status) {
-  if (!window.db) return;
-  window.db.collection('orders').doc(id).update({ status: status });
-  }
+// Initialization
+document.addEventListener('DOMContentLoaded', () => {
+      // Render initial products
+                              filterCollections('all');
+      updateCartCount();
 
-  function loadStats() {
-  const content = document.getElementById('admin-content');
-  const sortedBySells = [...products].sort((a, b) => (b.sells || 0) - (a.sells || 0)).slice(0, 5);
-  let topHtml = sortedBySells.map(p => `<div class="order-item-row"><span>${p.name}</span><span>${p.sells || 0} Sells</span></div>`).join('');
+                              // Scroll reveal event
+                              window.addEventListener('scroll', reveal);
+      reveal(); // Initial check
 
-  content.innerHTML = `
-  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px;">
-  <div class="order-card"><h3>Top Sellers</h3><div style="margin-top:20px;">${topHtml}</div></div>
-  <div class="order-card"><h3>Site Analytics</h3><p style="opacity:0.5; margin-top:20px;">Connected to Firebase Live Stats.</p></div>
-  </div>
-  `;
-  }
+                              // Navbar scroll effect
+                              window.addEventListener('scroll', () => {
+                                        const nav = document.querySelector('nav');
+                                        if (nav) nav.classList.toggle('scrolled', window.scrollY > 50);
+                              });
 
-  function loadSettings() {
-  const content = document.getElementById('admin-content');
-  content.innerHTML = `
-  <div class="order-card">
-  <h3>Admin Management</h3>
-  <p style="opacity:0.6; margin-bottom: 20px;">Master Control Panel - Med Boali</p>
-  <div style="display:flex; gap: 20px;">
-  <button class="btn primary-btn" style="padding: 10px 20px;">Change Security Key</button>
-  <button class="btn secondary-btn" style="padding: 10px 20px;">Reset Statistics</button>
-  </div>
-  </div>
-  `;
-  }
+                              // Close modal on click outside
+                              window.onclick = (event) => {
+                                        const qvModal = document.getElementById('quick-view-modal');
+                                        const coModal = document.getElementById('checkout-modal');
+                                        if (event.target === qvModal) closeQuickView();
+                                        if (event.target === coModal) closeCheckout();
+                              };
 
-  function refreshOrders() { loadOrders(); }
-
-  document.addEventListener('DOMContentLoaded', () => {
-  initMarquee();
-  initProductGrid('all');
-  initScrollAnimations();
-  initAdminAccess();
-
-  // Close cart on overlay click
-  document.getElementById('cart-overlay').addEventListener('click', closeCart);
-  });
-  
+                              // Safety timeout for loading screen
+                              setTimeout(() => {
+                                        const loadingScreen = document.getElementById('loading-screen');
+                                        if (loadingScreen) {
+                                                      loadingScreen.style.opacity = '0';
+                                                      setTimeout(() => loadingScreen.remove(), 500);
+                                        }
+                              }, 2000);
+});
